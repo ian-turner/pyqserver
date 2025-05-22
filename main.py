@@ -17,15 +17,28 @@ def socket_worker(socket):
         connFile = conn.makefile()
         with conn:
             print('Connected to %s' % str(addr))
-            conn.send('# quantum server, version 0.1.\n'.encode())
-            while True:
-                # reading input from client line by line
-                line = connFile.readline()
-                if not line:
-                    connFile.close()
-                    conn.close()
-                    break
-                print(line, end='')
+            conn.send('# quantum server, version 0.2.\n'.encode())
+            # reading simulation mode from client
+            sim_mode = connFile.readline().strip()
+            if sim_mode == 'Universal':
+                # reading commands
+                while True:
+                    line = connFile.readline()
+                    if not line:
+                        connFile.close()
+                        conn.close()
+                        break
+                    command = line.strip()
+                    if command == 'quit':
+                        connFile.close()
+                        conn.close()
+                        break
+                    
+                    # parsing command
+                    print(command)
+                    # ...
+            else:
+                raise Exception('Invalid simulation mode')
 
 
 if __name__ == '__main__':
