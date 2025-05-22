@@ -3,12 +3,6 @@ from multiprocessing import Process
 from argparse import ArgumentParser
 
 
-# server config
-HOST = '127.0.0.1'
-DEFAULT_PORT = 1901
-DEFAULT_NUM_WORKERS = 30
-
-
 def socket_worker(socket):
     """Handles socket connections in parallel"""
     while True:
@@ -44,14 +38,14 @@ def socket_worker(socket):
 if __name__ == '__main__':
     # reading command line arguments
     parser = ArgumentParser()
-    parser.add_argument('-p', '--port', type=int, default=DEFAULT_PORT)
-    parser.add_argument('-n', '--num_workers', type=int, default=DEFAULT_NUM_WORKERS)
+    parser.add_argument('-p', '--port', type=int, default=1901)
+    parser.add_argument('-n', '--num_workers', type=int, default=30)
     args = parser.parse_args()
 
     # setting up socket connection
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         print('Starting quantum server on port %d with %d workers' % (args.port, args.num_workers))
-        s.bind((HOST, args.port))
+        s.bind(('127.0.0.1', args.port))
         s.listen()
         
         # starting worker processes to listen for connections
