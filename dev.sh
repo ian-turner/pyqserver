@@ -1,3 +1,4 @@
 #!/bin/bash
 
-watchmedo auto-restart --pattern "*.py" --recursive --signal SIGTERM python main.py
+source ./setup.sh
+watchmedo auto-restart --pattern "*.py" --recursive --signal SIGTERM python ./main.py
