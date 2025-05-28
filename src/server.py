@@ -1,6 +1,5 @@
 import socket
 from multiprocessing import Process
-from argparse import ArgumentParser
 
 
 def socket_worker(socket):
@@ -35,24 +34,25 @@ def socket_worker(socket):
                 raise Exception('Invalid simulation mode')
 
 
-if __name__ == '__main__':
-    # reading command line arguments
-    parser = ArgumentParser()
-    parser.add_argument('-p', '--port', type=int, default=1901)
-    parser.add_argument('-n', '--num_workers', type=int, default=30)
-    args = parser.parse_args()
+class Server:
+    def __init__(self, port: int, num_workers: int, verbose: bool = False):
+        self.port = port
+        self.num_workers = num_workers
+        self.verbose = verbose
 
-    # setting up socket connection
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        print('Starting quantum server on port %d with %d workers' % (args.port, args.num_workers))
-        s.bind(('127.0.0.1', args.port))
-        s.listen()
-        
-        # starting worker processes to listen for connections
-        procs = [Process(target=socket_worker, args=(s,)) \
-                 for _ in range(args.num_workers)]
-        for p in procs:
-            p.start()
+    def run(self):
+        # setting up socket connection
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            print('Starting quantum server on port %d with %d workers' % \
+                  (self.port, self.num_workers))
+            s.bind(('127.0.0.1', self.port))
+            s.listen()
+            
+            # starting worker processes to listen for connections
+            procs = [Process(target=socket_worker, args=(s,)) \
+                    for _ in range(self.num_workers)]
+            for p in procs:
+                p.start()
 
-        for p in procs:
-            p.join()
+            for p in procs:
+                p.join()
