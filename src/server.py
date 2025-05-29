@@ -1,37 +1,58 @@
 import socket
 from multiprocessing import Process
 
+from simulator import Simulator
+from parser import parse_command
 
-def socket_worker(socket):
-    """Handles socket connections in parallel"""
-    while True:
-        # waiting for a new connection
-        conn, addr = socket.accept()
+
+def handle_connection(conn):
+    with conn:
+        conn.send('# quantum server, version 0.2.\n'.encode())
+        # reading simulation mode from client
         connFile = conn.makefile()
-        with conn:
-            print('Connected to %s' % str(addr))
-            conn.send('# quantum server, version 0.2.\n'.encode())
-            # reading simulation mode from client
-            sim_mode = connFile.readline().strip()
-            if sim_mode == 'Universal':
-                # reading commands
+        sim_mode = connFile.readline().strip()
+        match sim_mode:
+            case 'Universal':
+                # setting up simulator
+                sim = Simulator()
+
                 while True:
+                    # reading the next line
                     line = connFile.readline()
                     if not line:
                         connFile.close()
                         conn.close()
                         break
+
+                    # processing 'quit' condition
                     command = line.strip()
-                    if command == 'quit':
-                        connFile.close()
-                        conn.close()
-                        break
+                    match command:
+                        case 'quit':
+                            connFile.close()
+                            conn.close()
+                            break
+                        case 'reset':
+                            sim.reset()
+                        case _:
+                            # parsing command into simulator operations
+                            print(command)
+                            operation = parse_command(command)
+                            result = sim.execute(operation)
+                            if result != None:
+                                conn.send(('Reply "%d"\n' % result).encode())
                     
-                    # parsing command
-                    print(command)
-                    # ...
-            else:
+            case _:
                 raise Exception('Invalid simulation mode')
+
+
+def socket_worker(sock):
+    """Handles socket connections in parallel"""
+    while True:
+        # waiting for a new connection
+        conn, addr = sock.accept()
+        print('Connected to %s' % str(addr))
+        handle_connection(conn)
+        print('Connection to %s closed' % str(addr))
 
 
 class Server:
@@ -54,5 +75,6 @@ class Server:
             for p in procs:
                 p.start()
 
+            # waiting for processes to finish
             for p in procs:
                 p.join()
