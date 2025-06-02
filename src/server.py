@@ -1,12 +1,15 @@
 import socket
 from multiprocessing import Process
 
-from simulator import Simulator
-from parser import parse_command
+from simulator import *
+
+
+def parse_command(command: str) -> SimOp:
+    print(command)
 
 
 def handle_connection(conn):
-    with conn:
+    try:
         conn.send('# quantum server, version 0.2.\n'.encode())
         # reading simulation mode from client
         connFile = conn.makefile()
@@ -35,14 +38,16 @@ def handle_connection(conn):
                             sim.reset()
                         case _:
                             # parsing command into simulator operations
-                            print(command)
                             operation = parse_command(command)
                             result = sim.execute(operation)
                             if result != None:
                                 conn.send(('Reply "%d"\n' % result).encode())
                     
             case _:
-                raise Exception('Invalid simulation mode')
+                conn.send(b'Invalid simulation method\n')
+                
+    except Exception as e:
+        conn.send(b'Internal error: %s\n' % e)
 
 
 def socket_worker(sock):

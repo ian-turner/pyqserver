@@ -26,6 +26,33 @@ class MeasureOp(SimOp, ABC):
     """
 
 
+class QInit(SimOp):
+    """Initializes a qubit in a register"""
+
+
+class BInit(SimOp):
+    """Initializes a bit in a register"""
+
+
+class NInit(SimOp):
+    """Initializes a qubit from a bit"""
+
+
+class Measure(MeasureOp):
+    """Measure a qubit register"""
+
+
+class Discard(MeasureOp):
+    """Discard a bit or measure and discard a qubit"""
+
+
+class Read(MeasureOp):
+    """
+    Send the value of bit register or measure
+    and send value of quantum register
+    """
+
+
 class Simulator:
     def __init__(self):
         pass
