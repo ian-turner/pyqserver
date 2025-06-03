@@ -5,7 +5,48 @@ from simulator import *
 
 
 def parse_command(command: str) -> SimOp:
-    print(command)
+    argv = command.split(' ')
+    operation = argv[0]
+    args = [int(x) for x in argv[1:]]
+    argc = len(args)
+
+    match operation:
+        case '#':
+            # ignoring comments
+            pass
+
+        case 'Q':
+            if argc != 1 and argc != 2:
+                raise Exception('Invalid number of arguments for Q')
+            return QInit(*args)
+            
+        case 'B':
+            if argc != 1 and argc != 2:
+                raise Exception('Invalid number of arguments for B')
+            return BInit(*args)
+            
+        case 'N':
+            if argc != 1:
+                raise Exception('Command N requires exactly one argument')
+            return NInit(*args)
+        
+        case 'M':
+            if argc != 1:
+                raise Exception('Command M requires exactly one argument')
+            return Measure(args[0])
+        
+        case 'R':
+            if argc != 1:
+                raise Exception('Command R requires exactly one argument')
+            return Read(args[0])
+
+        case 'D':
+            if argc != 1:
+                raise Exception('Command D requires exactly one argument')
+            return Discard(args[0])
+        
+        case _:
+            raise Exception('Invalid operation identifier')
 
 
 def handle_connection(conn):
@@ -14,37 +55,45 @@ def handle_connection(conn):
         # reading simulation mode from client
         connFile = conn.makefile()
         sim_mode = connFile.readline().strip()
-        match sim_mode:
-            case 'Universal':
-                # setting up simulator
-                sim = Simulator()
+        
+        if sim_mode != 'Universal':
+            conn.send(b'Invalid simulation method\n')
 
-                while True:
-                    # reading the next line
-                    line = connFile.readline()
-                    if not line:
-                        connFile.close()
-                        conn.close()
-                        break
+        # setting up simulator
+        sim = Simulator()
 
-                    # processing 'quit' condition
-                    command = line.strip()
-                    match command:
-                        case 'quit':
-                            connFile.close()
-                            conn.close()
-                            break
-                        case 'reset':
-                            sim.reset()
-                        case _:
-                            # parsing command into simulator operations
-                            operation = parse_command(command)
-                            result = sim.execute(operation)
-                            if result != None:
-                                conn.send(('Reply "%d"\n' % result).encode())
-                    
-            case _:
-                conn.send(b'Invalid simulation method\n')
+        while True:
+            # reading the next line
+            line = connFile.readline()
+            if not line:
+                connFile.close()
+                conn.close()
+                break
+
+            command = line.strip()
+            match command:
+                case 'quit':
+                    connFile.close()
+                    conn.close()
+                    break
+                case 'reset':
+                    sim.reset()
+                case 'help':
+                    # return help message
+                    # ...
+                    pass
+                case 'fresh':
+                    # ...
+                    pass
+                case 'dump':
+                    # ...
+                    pass
+                case _:
+                    # parsing command into simulator operations
+                    operation = parse_command(command)
+                    result = sim.execute(operation)
+                    if result != None:
+                        conn.send(('Reply "%d"\n' % result).encode())
                 
     except Exception as e:
         conn.send(b'Internal error: %s\n' % e)
