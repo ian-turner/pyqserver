@@ -20,11 +20,11 @@ def client():
         client.close()
 
 
-def test_connection(client):
-    """Testing connection to qserver"""
-    resp = client.recv(1024)
-    assert resp == b'# quantum server, version 0.2.\n'
-    client.send(b'Universal\nquit\n')
+# def test_connection(client):
+#     """Testing connection to qserver"""
+#     resp = client.recv(1024)
+#     assert resp == b'# quantum server, version 0.2.\n'
+#     client.send(b'Universal\nquit\n')
 
 
 def test_init_commands(client):

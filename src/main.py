@@ -12,5 +12,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # starting server
-    server = Server(args.port, args.num_workers, args.verbose)
-    server.run()
+    Server(args.port, args.num_workers, args.verbose).run()
