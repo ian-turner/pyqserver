@@ -1,154 +1,118 @@
 from abc import ABC
-from typing import List, Union
-from dataclasses import dataclass
+from typing import List, Union, Type
+from dataclasses import dataclass, is_dataclass
 
 
-@dataclass
 class Command(ABC):
-    pass
+    def __init_subclass__(cls: Type, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if not is_dataclass(cls):
+            dataclass(cls)
 
-@dataclass
 class Help(Command):
     pass
 
-@dataclass
 class Empty(Command):
     pass
 
-@dataclass
 class Reset(Command):
     pass
 
-@dataclass
 class Fresh(Command):
     pass
 
-@dataclass
 class Protocol(Command):
     protocol: int
 
-@dataclass
 class Quit(Command):
     pass
 
-@dataclass
 class Dump(Command):
     pass
 
-@dataclass
 class Q(Command):
     reg: int
     bvalue: bool = False
 
-@dataclass
 class B(Command):
     reg: int
     bvalue: bool = False
 
-@dataclass
 class N(Command):
     reg: int
 
-@dataclass
 class R(Command):
     reg: int
 
-@dataclass
 class D(Command):
     reg: int
 
-@dataclass
 class M(Command):
     reg: int
 
-@dataclass
-class X(Command):
+class OneQubitUnitary(Command):
     reg: int
     controls: List[int]
 
-@dataclass
-class Y(Command):
-    reg: int
+class TwoQubitUnitary(Command):
+    x: int
+    y: int
     controls: List[int]
 
-@dataclass
-class Z(Command):
-    reg: int
+class ThreeQubitUnitary(Command):
+    x: int
+    y: int
+    z: int
     controls: List[int]
 
-@dataclass
-class H(Command):
-    reg: int
-    controls: List[int]
+class X(OneQubitUnitary):
+    pass
+
+class Y(OneQubitUnitary):
+    pass
+
+class Z(OneQubitUnitary):
+    pass
+
+class H(OneQubitUnitary):
+    pass
+
+class S(OneQubitUnitary):
+    pass
+
+class T(OneQubitUnitary):
+    pass
+
+class TInv(OneQubitUnitary):
+    pass
+
+class SInv(OneQubitUnitary):
+    pass
 
 @dataclass
-class S(Command):
-    reg: int
-    controls: List[int]
-
-@dataclass
-class T(Command):
-    reg: int
-    controls: List[int]
-
-@dataclass
-class Rot(Command):
+class Rot(OneQubitUnitary):
     angle: float
-    reg: int
-    controls: List[int]
 
 @dataclass
-class CRot(Command):
-    angle: float
-    control: int
-    target: int
-    controls: List[int]
-
-@dataclass
-class Diag(Command):
+class Diag(OneQubitUnitary):
     a: float
     b: float
-    reg: int
-    controls: List[int]
+
+class CNOT(TwoQubitUnitary):
+    pass
 
 @dataclass
-class TInv(Command):
-    reg: int
-    controls: List[int]
+class CRot(TwoQubitUnitary):
+    angle: float
 
-@dataclass
-class SInv(Command):
-    reg: int
-    controls: List[int]
+class Toffoli(ThreeQubitUnitary):
+    pass
 
-@dataclass
-class CNOT(Command):
-    target: int
-    control: int
-    controls: List[int]
+class CZ(TwoQubitUnitary):
+    pass
 
-@dataclass
-class Toffoli(Command):
-    a: int
-    b: int
-    c: int
-    controls: List[int]
-
-@dataclass
-class CZ(Command):
-    target: int
-    control: int
-    controls: List[int]
-
-@dataclass
-class CY(Command):
-    target: int
-    control: int
-    controls: List[int]
-
-@dataclass
-class Result:
-    data: Union[int, None] = None
+class CY(TwoQubitUnitary):
+    pass
 
 
 class ParseError(Exception):
@@ -177,15 +141,19 @@ def parse_float(float_str: float) -> float:
         return float(float_str)
     except:
         raise ParseError('%s is not a float' % float_str)
+    
+
+def parse_nats(float_strs: List[str]) -> List[float]:
+    return [parse_nat(x) for x in float_strs]
 
 
-def parse_command(command: str) -> Result:
+def parse_command(command: str) -> Command:
     command_split = command.split(' ')
     op = command_split[0]
     args = command_split[1:]
 
     match op, args:
-        case 'Q', [reg]: return Q(parse_nat(reg))
+        case 'Q', [reg]: return Q(reg=parse_nat(reg))
         case 'Q', [bit, reg]: return Q(parse_nat(reg), parse_bit(bit))
         case 'Q', []: raise ParseError('Command Q requires an argument')
         case 'Q', [*_]: raise ParseError('Command Q requires at most two arguments')
@@ -201,42 +169,40 @@ def parse_command(command: str) -> Result:
         case 'R', [*_]: raise ParseError('Command R requires exactly one argument')
         case 'D', [reg]: return D(parse_nat(reg))
         case 'D', [*_]: raise ParseError('Command D requires exactly one argument')
-        case 'X', [reg, *ctrls]: return X(parse_nat(reg), [parse_nat(x) for x in ctrls])
+        case 'X', [reg, *ctrls]: return X(parse_nat(reg), parse_nats(ctrls))
         case 'X', []: raise ParseError('Command X requires at least one argument')
-        case 'Y', [reg, *ctrls]: return Y(parse_nat(reg), [parse_nat(x) for x in ctrls])
+        case 'Y', [reg, *ctrls]: return Y(parse_nat(reg), parse_nats(ctrls))
         case 'Y', []: raise ParseError('Command Y requires at least one argument')
-        case 'Z', [reg, *ctrls]: return Z(parse_nat(reg), [parse_nat(x) for x in ctrls])
+        case 'Z', [reg, *ctrls]: return Z(parse_nat(reg), parse_nats(ctrls))
         case 'Z', []: raise ParseError('Command Z requires at least one argument')
-        case 'H', [reg, *ctrls]: return H(parse_nat(reg), [parse_nat(x) for x in ctrls])
+        case 'H', [reg, *ctrls]: return H(parse_nat(reg), parse_nats(ctrls))
         case 'H', []: raise ParseError('Command H requires at least one argument')
-        case 'S', [reg, *ctrls]: return S(parse_nat(reg), [parse_nat(x) for x in ctrls])
+        case 'S', [reg, *ctrls]: return S(parse_nat(reg), parse_nats(ctrls))
         case 'S', []: raise ParseError('Command S requires at least one argument')
-        case 'T', [reg, *ctrls]: return T(parse_nat(reg), [parse_nat(x) for x in ctrls])
+        case 'T', [reg, *ctrls]: return T(parse_nat(reg), parse_nats(ctrls))
         case 'T', []: raise ParseError('Command T requires at least one argument')
-        case 'T*', [reg, *ctrls]: return TInv(parse_nat(reg), [parse_nat(x) for x in ctrls])
+        case 'T*', [reg, *ctrls]: return TInv(parse_nat(reg), parse_nats(ctrls))
         case 'T*', []: raise ParseError('Command T* requires at least one argument')
-        case 'S*', [reg, *ctrls]: return SInv(parse_nat(reg), [parse_nat(x) for x in ctrls])
+        case 'S*', [reg, *ctrls]: return SInv(parse_nat(reg), parse_nats(ctrls))
         case 'S*', []: raise ParseError('Command S* requires at least one argument')
-        case 'DIAG', [a, b, reg, *ctrls]: return Diag(parse_float(a), parse_float(b), \
-            parse_nat(reg), [parse_nat(x) for x in ctrls])
+        case 'DIAG', [reg, *ctrls, a, b]: return Diag(parse_nat(reg), parse_nats(ctrls), \
+            parse_float(a), parse_float(b))
         case 'DIAG', [*_]: raise ParseError('Command DIAG requires at least three arguments')
-        case 'ROT', [r, reg, *ctrls]: return Rot(parse_float(r), parse_nat(reg), \
-            [parse_nat(x) for x in ctrls])
+        case 'ROT', [r, reg, *ctrls]: return Rot(parse_nat(reg), parse_nats(ctrls), \
+            parse_float(r))
         case 'ROT', [*_]: raise ParseError('Command ROT requires at least two arguments')
-        case 'CROT', [r, x, y, *ctrls]: return CRot(parse_float(r), parse_nat(x), \
-            parse_nat(y), [parse_nat(x) for x in ctrls])
+        case 'CROT', [r, x, y, *ctrls]: return CRot(parse_nat(x), parse_nat(y), \
+            parse_nats(ctrls), parse_float(r))
         case 'CROT', [*_]: raise ParseError('Command CROT requires at least three arguments')
         case 'CNOT', [x, y, *ctrls]: return CNOT(parse_nat(x), \
-            parse_nat(y), [parse_nat(x) for x in ctrls])
+            parse_nat(y), parse_nats(ctrls))
         case 'CNOT', [*_]: raise ParseError('Command CNOT requires at least two arguments')
         case 'TOF', [a, b, c, *ctrls]: return Toffoli(parse_nat(a), \
-            parse_nat(b), parse_nat(c), [parse_nat(x) for x in ctrls])
+            parse_nat(b), parse_nat(c), parse_nats(ctrls))
         case 'TOF', [*_]: raise ParseError('Command TOF requires at least three arguments')
-        case 'CZ', [x, y, *ctrls]: return CZ(parse_nat(x), \
-            parse_nat(y), [parse_nat(x) for x in ctrls])
+        case 'CZ', [x, y, *ctrls]: return CZ(parse_nat(x), parse_nat(y), parse_nats(ctrls))
         case 'CZ', [*_]: raise ParseError('Command CZ requires at least two arguments')
-        case 'CY', [x, y, *ctrls]: return CY(parse_nat(x), \
-            parse_nat(y), [parse_nat(x) for x in ctrls])
+        case 'CY', [x, y, *ctrls]: return CY(parse_nat(x), parse_nat(y), parse_nats(ctrls))
         case 'CY', [*_]: raise ParseError('Command CY requires at least two arguments')
         case 'dump', _: return Dump()
         case 'fresh', _: return Fresh()

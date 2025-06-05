@@ -59,9 +59,12 @@ class Server:
                     try:
                         command = parse_command(command_raw)
                         print(command)
-                        if isinstance(command, Quit):
-                            break
-                        
+                        match command:
+                            case Quit():
+                                break
+                            case _:
+                                pass
+
                     except ParseError as e:
                         conn.send(('! Parse error: %s. Try help.\n' % str(e)).encode())
 
