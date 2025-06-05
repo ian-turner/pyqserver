@@ -222,4 +222,6 @@ def parse_command(command_str: str) -> Command:
         case 'reset', _: return Reset()
         case 'help', _: return Help()
         case 'quit', _: return Quit()
+        case 'protocol', [version]: return Protocol(parse_nat(version))
+        case 'protocol', [*_]: raise ParseError('Command Protocol requires exactly one argument')
         case _, _: raise ParseError('Unrecognized operation')
