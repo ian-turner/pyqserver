@@ -1,0 +1,13 @@
+Universal
+Q 0
+Q 1 2
+B 3
+B 0 4
+B 1 5
+N 5
+X 0
+Y 1 2 5
+ROT 1.5 0
+ROT 1.5 0 1 2 3
+CROT 3.2 0 1
+quit

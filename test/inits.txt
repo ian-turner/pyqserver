@@ -1,8 +1,0 @@
-Universal
-Q 0
-Q 1 2
-B 3
-B 0 4
-B 1 5
-N 5
-quit
