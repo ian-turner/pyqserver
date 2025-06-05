@@ -1,3 +1,4 @@
+import sys
 import socket
 from threading import Thread
 
@@ -30,31 +31,42 @@ class Server:
                     conn.send(b'Internal error: Too many conncurrent connections\n')
 
     def _handle_connection(self, conn, addr):
-        print('Connected to %s' % str(addr))
         self.num_conns += 1
-        with conn:
-            # sending initial info message
-            connFile = conn.makefile(mode='rw')
-            connFile.write('# quantum server, version 0.2.\n')
+        try:
+            print('Connected to %s' % str(addr))
+            with conn:
+                # sending initial info message
+                conn.send(b'# quantum server, version 0.2.\n')
 
-            # reading simulation mode from client
-            sim_mode = connFile.readline().strip()
-            
-            # making sure only universal mode is selected
-            if sim_mode != 'Universal':
-                connFile.write('Invalid simulation method\n')
+                # reading simulation mode from client
+                connFile = conn.makefile()
+                sim_mode = connFile.readline().strip()
+                
+                # making sure only universal mode is selected
+                if sim_mode != 'Universal':
+                    conn.send(b'Invalid simulation method\n')
 
-            # parsing commands line by line
-            while True:
-                # reading the next line
-                line = connFile.readline()
-                if not line:
-                    break
+                # parsing commands line by line
+                while True:
+                    # reading the next line
+                    line = connFile.readline()
+                    if not line:
+                        break
 
-                # parsing the line
-                command_raw = line.strip()
-                command = parse_command(command_raw)
-                print(command)
+                    # parsing the command
+                    command_raw = line.strip()
+                    try:
+                        command = parse_command(command_raw)
+                        print(command)
+                        if isinstance(command, Quit):
+                            break
+                        
+                    except ParseError as e:
+                        conn.send(('! Parse error: %s. Try help.\n' % str(e)).encode())
 
-        print('Connection to %s closed' % str(addr))
+            print('Connection to %s closed' % str(addr))
+
+        except ConnectionResetError:
+            print('Error: connection to %s reset' % str(addr), file=sys.stderr)
+
         self.num_conns -= 1
