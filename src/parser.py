@@ -154,15 +154,15 @@ def parse_nats(float_strs: List[str]) -> List[float]:
     return [parse_nat(x) for x in float_strs]
 
 
-def parse_command(command: str) -> Command:
-    if command[0] == '#':
+def parse_command(command_str: str) -> Command:
+    if command_str[0] == '#':
         # ignoring comments
         return Empty()
     
     # splitting command into words
-    command_split = command.split(' ')
-    op = command_split[0]
-    args = command_split[1:]
+    command_str_split = command_str.split(' ')
+    op = command_str_split[0]
+    args = command_str_split[1:]
 
     # parsing command into operation
     match op, args:
