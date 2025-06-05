@@ -29,6 +29,7 @@ class Server:
                     t.start()
                 else:
                     conn.send(b'Internal error: Too many conncurrent connections\n')
+                    conn.close()
 
     def _handle_connection(self, conn, addr):
         self.num_conns += 1
