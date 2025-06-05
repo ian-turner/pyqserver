@@ -3,6 +3,8 @@ import socket
 from threading import Thread
 
 from parser import *
+from interpreter import *
+from simulator import *
 
 
 HELP_MESSAGE = """
@@ -60,12 +62,12 @@ class Server:
             while True:
                 # handling connection
                 conn, addr = s.accept()
-                if self.num_conns < self.max_conns:
-                    t = Thread(target=self._handle_connection, args=(conn, addr,))
-                    t.start()
-                else:
-                    conn.send(b'Internal error: Too many conncurrent connections\n')
-                    conn.close()
+                while self.num_conns >= self.max_conns:
+                    # stopping at connection limit and waiting
+                    pass
+
+                t = Thread(target=self._handle_connection, args=(conn, addr,))
+                t.start()
 
     def _handle_connection(self, conn, addr):
         self.num_conns += 1
@@ -84,29 +86,34 @@ class Server:
                     conn.send(b'Invalid simulation method\n')
 
                 # parsing commands line by line
+                simulator = Simulator()
                 while True:
                     # reading the next line
                     line = connFile.readline()
-                    if not line:
-                        break
+                    if not line: break
 
-                    # parsing the command
-                    command_raw = line.strip()
                     try:
-                        command = parse_command(command_raw)
-                        print(command)
-                        match command:
-                            case Quit():
-                                break
-                            case Help():
-                                conn.send(HELP_MESSAGE.encode())
+                        # parsing the command
+                        command_str: str = line.strip()
+                        command: Command = parse_command(command_str)
 
+                        # interpreting the command
+                        result: Result = interpret_command(command, simulator)
+                        match result:
+                            case OK(): pass
+                            case Terminate(): break
+                            case Reply(): conn.send(('Reply "%s"\n' % str(result.data)).encode())
+
+                    # handling errors
                     except ParseError as e:
                         conn.send(('! Parse error: %s. Try help.\n' % str(e)).encode())
-
-            print('Connection to %s closed' % str(addr))
+                    except UsageError as e:
+                        conn.send((('Error "! %s"\n' % str(e))).encode())
+                    except Exception as e:
+                        conn.send(('Internal error: %s\n' % str(e)).encode())
 
         except ConnectionResetError:
             print('Error: connection to %s reset' % str(addr), file=sys.stderr)
 
+        print('Connection to %s closed' % str(addr))
         self.num_conns -= 1
