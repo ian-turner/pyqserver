@@ -51,11 +51,6 @@ class D(Command):
 class M(Command):
     reg: int
 
-class TwoQubitUnitary(Command):
-    x: int
-    y: int
-    controls: List[int]
-
 class X(Command):
     reg: int
     controls: List[int]
@@ -121,7 +116,7 @@ class CZ(Command):
     y: int
     controls: List[int]
 
-class CY(TwoQubitUnitary):
+class CY(Command):
     x: int
     y: int
     controls: List[int]
