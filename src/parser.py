@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import List, Union, Type
+from typing import List, Type
 from dataclasses import dataclass, is_dataclass
 
 
@@ -10,25 +10,26 @@ class Command(ABC):
             dataclass(cls)
 
 class Help(Command):
-    pass
+    """Displays help message"""
 
 class Empty(Command):
-    pass
+    """Does nothing"""
 
 class Reset(Command):
-    pass
+    """Resets the state of the quantum simulator"""
 
 class Fresh(Command):
-    pass
-
-class Protocol(Command):
-    protocol: int
+    """Returns the address of a free quantum register"""
 
 class Quit(Command):
-    pass
+    """Quits the simulator"""
 
 class Dump(Command):
-    pass
+    """Returns the current state of the simulator"""
+
+class Protocol(Command):
+    """Used for negotiation of protocol versions"""
+    protocol: int
 
 class Q(Command):
     reg: int
@@ -50,69 +51,80 @@ class D(Command):
 class M(Command):
     reg: int
 
-class OneQubitUnitary(Command):
-    reg: int
-    controls: List[int]
-
 class TwoQubitUnitary(Command):
     x: int
     y: int
     controls: List[int]
 
-class ThreeQubitUnitary(Command):
+class X(Command):
+    reg: int
+    controls: List[int]
+
+class Y(Command):
+    reg: int
+    controls: List[int]
+
+class Z(Command):
+    reg: int
+    controls: List[int]
+
+class H(Command):
+    reg: int
+    controls: List[int]
+
+class S(Command):
+    reg: int
+    controls: List[int]
+
+class T(Command):
+    reg: int
+    controls: List[int]
+
+class TInv(Command):
+    reg: int
+    controls: List[int]
+
+class SInv(Command):
+    reg: int
+    controls: List[int]
+
+class Rot(Command):
+    angle: float
+    reg: int
+    controls: List[int]
+
+class Diag(Command):
+    a: float
+    b: float
+    reg: int
+    controls: List[int]
+
+class CNOT(Command):
+    x: int
+    y: int
+    controls: List[int]
+
+class CRot(Command):
+    angle: float
+    x: int
+    y: int
+    controls: List[int]
+
+class Toffoli(Command):
     x: int
     y: int
     z: int
     controls: List[int]
 
-class X(OneQubitUnitary):
-    pass
-
-class Y(OneQubitUnitary):
-    pass
-
-class Z(OneQubitUnitary):
-    pass
-
-class H(OneQubitUnitary):
-    pass
-
-class S(OneQubitUnitary):
-    pass
-
-class T(OneQubitUnitary):
-    pass
-
-class TInv(OneQubitUnitary):
-    pass
-
-class SInv(OneQubitUnitary):
-    pass
-
-@dataclass
-class Rot(OneQubitUnitary):
-    angle: float
-
-@dataclass
-class Diag(OneQubitUnitary):
-    a: float
-    b: float
-
-class CNOT(TwoQubitUnitary):
-    pass
-
-@dataclass
-class CRot(TwoQubitUnitary):
-    angle: float
-
-class Toffoli(ThreeQubitUnitary):
-    pass
-
-class CZ(TwoQubitUnitary):
-    pass
+class CZ(Command):
+    x: int
+    y: int
+    controls: List[int]
 
 class CY(TwoQubitUnitary):
-    pass
+    x: int
+    y: int
+    controls: List[int]
 
 
 class ParseError(Exception):
@@ -148,17 +160,23 @@ def parse_nats(float_strs: List[str]) -> List[float]:
 
 
 def parse_command(command: str) -> Command:
+    if command[0] == '#':
+        # ignoring comments
+        return Empty()
+    
+    # splitting command into words
     command_split = command.split(' ')
     op = command_split[0]
     args = command_split[1:]
 
+    # parsing command into operation
     match op, args:
         case 'Q', [reg]: return Q(parse_nat(reg))
-        case 'Q', [bit, reg]: return Q(parse_nat(reg), parse_bit(bit))
+        case 'Q', [reg, bit]: return Q(parse_nat(reg), parse_bit(bit))
         case 'Q', []: raise ParseError('Command Q requires an argument')
         case 'Q', [*_]: raise ParseError('Command Q requires at most two arguments')
         case 'B', [reg]: return B(parse_nat(reg))
-        case 'B', [bit, reg]: return B(parse_nat(reg), parse_bit(bit))
+        case 'B', [reg, bit]: return B(parse_nat(reg), parse_bit(bit))
         case 'B', []: raise ParseError('Command B requires an argument')
         case 'B', [*_]: raise ParseError('Command B requires at most two arguments')
         case 'N', [reg]: return N(parse_nat(reg))
@@ -188,14 +206,14 @@ def parse_command(command: str) -> Command:
         case 'DIAG', [reg, *ctrls, a, b]: return Diag(parse_nat(reg), parse_nats(ctrls), \
             parse_float(a), parse_float(b))
         case 'DIAG', [*_]: raise ParseError('Command DIAG requires at least three arguments')
-        case 'ROT', [r, reg, *ctrls]: return Rot(parse_nat(reg), parse_nats(ctrls), \
-            parse_float(r))
+        case 'ROT', [r, reg, *ctrls]: return Rot(parse_float(r), parse_nat(reg), \
+            parse_nats(ctrls))
         case 'ROT', [*_]: raise ParseError('Command ROT requires at least two arguments')
-        case 'CROT', [r, x, y, *ctrls]: return CRot(parse_nat(x), parse_nat(y), \
-            parse_nats(ctrls), parse_float(r))
-        case 'CROT', [*_]: raise ParseError('Command CROT requires at least three arguments')
-        case 'CNOT', [x, y, *ctrls]: return CNOT(parse_nat(x), \
+        case 'CROT', [r, x, y, *ctrls]: return CRot(parse_float(r), parse_nat(x), \
             parse_nat(y), parse_nats(ctrls))
+        case 'CROT', [*_]: raise ParseError('Command CROT requires at least three arguments')
+        case 'CNOT', [x, y, *ctrls]: return CNOT(parse_nat(x), parse_nat(y), \
+            parse_nats(ctrls))
         case 'CNOT', [*_]: raise ParseError('Command CNOT requires at least two arguments')
         case 'TOF', [a, b, c, *ctrls]: return Toffoli(parse_nat(a), \
             parse_nat(b), parse_nat(c), parse_nats(ctrls))
@@ -209,3 +227,4 @@ def parse_command(command: str) -> Command:
         case 'reset', _: return Reset()
         case 'help', _: return Help()
         case 'quit', _: return Quit()
+        case _, _: raise ParseError('Unrecognized operation')

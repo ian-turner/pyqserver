@@ -14,9 +14,9 @@ fresh               - return the address of a free register
 
 QRAM commands:
 Q x                 - initialize qubit x to |0>
-Q b x               - initialize qubit x to |b>
+Q x b               - initialize qubit x to |b>
 B x                 - initialize bit x to 0
-B b x               - initialize bit x to b
+B x b               - initialize bit x to b
 N x                 - initialize qubit from bit x
 M x                 - measure qubit x into bit x
 D x                 - discard bit or qubit x
@@ -94,6 +94,7 @@ class Server:
                     command_raw = line.strip()
                     try:
                         command = parse_command(command_raw)
+                        print(command)
                         match command:
                             case Quit():
                                 break
