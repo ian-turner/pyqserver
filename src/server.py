@@ -5,6 +5,42 @@ from threading import Thread
 from parser import *
 
 
+HELP_MESSAGE = """
+Control commands:
+help                - print usage information
+reset               - reset the machine to the initial state
+quit                - quit
+fresh               - return the address of a free register
+
+QRAM commands:
+Q x                 - initialize qubit x to |0>
+Q b x               - initialize qubit x to |b>
+B x                 - initialize bit x to 0
+B b x               - initialize bit x to b
+N x                 - initialize qubit from bit x
+M x                 - measure qubit x into bit x
+D x                 - discard bit or qubit x
+R x                 - read and discard bit or qubit x
+
+Gate operations:
+X x [ctrls]         - apply X-gate to qubit x
+Y x [ctrls]         - apply Y-gate to qubit x
+Z x [ctrls]         - apply Y-gate to qubit x
+H x [ctrls]         - apply H-gate to qubit x
+S x [ctrls]         - apply S-gate to qubit x
+S* x [ctrls]        - apply S*-gate to qubit x
+T x [ctrls]         - apply T-gate to qubit x
+T* x [ctrls]        - apply T*-gate to qubit x
+CNOT x y [ctrls]    - apply CNOT gate to qubits x and y
+TOF x y z [ctrls]   - apply Toffoli gate to qubits x, y, and z
+CZ x y [ctrls]      - apply controlled-Z gate to qubits x and y
+CY x y [ctrls]      - apply controlled-Y gate to qubits x and y
+DIAG a b x [ctrls]  - apply diagonal gate with values a, b to qubit x
+ROT r x [ctrls]     - apply RZ gate with angle r to qubit x
+CROT r x y [ctrls]  - apply controlled-RZ gate with angle r to qubits x and y
+"""
+
+
 class Server:
     def __init__(self, port: int, max_conns: int, verbose: bool = False):
         self.port = port
@@ -58,12 +94,11 @@ class Server:
                     command_raw = line.strip()
                     try:
                         command = parse_command(command_raw)
-                        print(command)
                         match command:
                             case Quit():
                                 break
-                            case _:
-                                pass
+                            case Help():
+                                conn.send(HELP_MESSAGE.encode())
 
                     except ParseError as e:
                         conn.send(('! Parse error: %s. Try help.\n' % str(e)).encode())

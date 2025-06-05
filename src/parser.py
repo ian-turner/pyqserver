@@ -153,7 +153,7 @@ def parse_command(command: str) -> Command:
     args = command_split[1:]
 
     match op, args:
-        case 'Q', [reg]: return Q(reg=parse_nat(reg))
+        case 'Q', [reg]: return Q(parse_nat(reg))
         case 'Q', [bit, reg]: return Q(parse_nat(reg), parse_bit(bit))
         case 'Q', []: raise ParseError('Command Q requires an argument')
         case 'Q', [*_]: raise ParseError('Command Q requires at most two arguments')
