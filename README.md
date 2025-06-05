@@ -10,6 +10,8 @@ Quantum computer simulation server for
     pip install -r requirements.txt
     ```
 
+    NOTE: you may need to run `python3` instead of `python` depending on your installation
+
 - To start the development server run
     ```
     scripts/dev.sh
