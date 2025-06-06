@@ -7,42 +7,6 @@ from interpreter import *
 from simulator import *
 
 
-HELP_MESSAGE = """
-Control commands:
-help                - print usage information
-reset               - reset the machine to the initial state
-quit                - quit
-fresh               - return the address of a free register
-
-QRAM commands:
-Q x                 - initialize qubit x to |0>
-Q x b               - initialize qubit x to |b>
-B x                 - initialize bit x to 0
-B x b               - initialize bit x to b
-N x                 - initialize qubit from bit x
-M x                 - measure qubit x into bit x
-D x                 - discard bit or qubit x
-R x                 - read and discard bit or qubit x
-
-Gate operations:
-X x [ctrls]         - apply X-gate to qubit x
-Y x [ctrls]         - apply Y-gate to qubit x
-Z x [ctrls]         - apply Y-gate to qubit x
-H x [ctrls]         - apply H-gate to qubit x
-S x [ctrls]         - apply S-gate to qubit x
-S* x [ctrls]        - apply S*-gate to qubit x
-T x [ctrls]         - apply T-gate to qubit x
-T* x [ctrls]        - apply T*-gate to qubit x
-CNOT x y [ctrls]    - apply CNOT gate to qubits x and y
-TOF x y z [ctrls]   - apply Toffoli gate to qubits x, y, and z
-CZ x y [ctrls]      - apply controlled-Z gate to qubits x and y
-CY x y [ctrls]      - apply controlled-Y gate to qubits x and y
-DIAG a b x [ctrls]  - apply diagonal gate with values a, b to qubit x
-ROT r x [ctrls]     - apply RZ gate with angle r to qubit x
-CROT r x y [ctrls]  - apply controlled-RZ gate with angle r to qubits x and y
-"""
-
-
 class Server:
     def __init__(self, port: int, max_conns: int, verbose: bool = False):
         self.port = port
@@ -82,8 +46,9 @@ class Server:
                 sim_mode = connFile.readline().strip()
                 
                 # making sure only universal mode is selected
-                if sim_mode != 'Universal':
+                while sim_mode != 'Universal':
                     conn.send(b'Invalid simulation method\n')
+                    sim_mode = connFile.readline().strip()
 
                 # parsing commands line by line
                 simulator = Simulator()
@@ -98,11 +63,26 @@ class Server:
                         command: Command = parse_command(command_str)
 
                         # interpreting the command
-                        result: Result = interpret_command(command, simulator)
+                        result: Result = interpret_command(command, simulator, \
+                                                           verbose=self.verbose)
+                                
+                        if self.verbose:
+                            print('\tIncoming command: "%s"' % command_str)
+                            print('\tParsed command: %s' % command)
+                            print('\tInterpreter result: %s' % result)
+
+                        # handling interpreter result
                         match result:
-                            case OK(): pass
-                            case Terminate(): break
-                            case Reply(): conn.send(('Reply "%s"\n' % str(result.data)).encode())
+                            case OK():
+                                pass
+                            case Null():
+                                pass
+                            case Terminate():
+                                break
+                            case Reply():
+                                conn.send(('Reply "%s"\n' % result.message).encode())
+                            case Info():
+                                conn.send(result.content.encode())
 
                     # handling errors
                     except ParseError as e:
