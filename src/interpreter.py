@@ -97,7 +97,8 @@ class Interpreter:
                 val = self.sim.read(command.reg)
                 return Reply(str(val))
             case D():
-                pass
+                self.sim.discard(command.reg)
+                return OK()
             case M():
                 self.sim.measure(command.reg)
                 return OK()

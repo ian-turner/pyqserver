@@ -132,3 +132,16 @@ class Simulator:
         
         # then return the bit value of the register
         return int(self.context[reg].bit)
+    
+    def discard(self, reg: Register):
+        # making sure register exists
+        if reg not in self.context:
+            raise UsageError('Register %d does not exist' % reg)
+        
+        # if reg is qubit type, measure it first
+        _reg = self.context[reg]
+        if isinstance(_reg, QubitRegister):
+            self.measure(reg)
+
+        # removing bit register from context
+        del self.context[reg]
