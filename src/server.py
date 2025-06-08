@@ -51,7 +51,7 @@ class Server:
                     sim_mode = connFile.readline().strip()
 
                 # parsing commands line by line
-                simulator = Simulator()
+                interpreter = Interpreter(lazy=False, verbose=self.verbose)
                 while True:
                     # reading the next line
                     line = connFile.readline()
@@ -63,9 +63,8 @@ class Server:
                         command: Command = parse_command(command_str)
 
                         # interpreting the command
-                        result: Result = interpret_command(command, simulator, \
-                                                           verbose=self.verbose)
-                                
+                        result: Result = interpreter.interpret(command)
+                        
                         if self.verbose:
                             print('\tIncoming command: "%s"' % command_str)
                             print('\tParsed command: %s' % command)

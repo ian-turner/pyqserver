@@ -41,80 +41,90 @@ CROT r x y [ctrls]  - apply controlled-RZ gate with angle r to qubits x and y
 """
 
 
-class Response(ABC):
+class Result(ABC):
     def __init_subclass__(cls: Type, **kwargs):
         super().__init_subclass__(**kwargs)
         if not is_dataclass(cls):
             dataclass(cls)
 
 
-class Reply(Response):
+class Reply(Result):
+    """Send reply string to user"""
     message: str
 
-class Info(Response):
+class Info(Result):
+    """Send message string to user (meant for debugging)"""
     content: str
 
-class OK(Response):
-    pass
+class OK(Result):
+    """The instruction has executed properly"""
 
-class Terminate(Response):
-    pass
+class Terminate(Result):
+    """Shut down the simulator and close the connection"""
 
-class Null(Response):
-    pass
+class Null(Result):
+    """Nothing happened"""
 
 
-def interpret_command(command: Command, simulator: Simulator, verbose: bool = False) -> Response:
-    match command:
-        case Empty(): return Null()
-        case Quit(): return Terminate()
-        case Help(): return Info(HELP_MESSAGE)
-        case Dump(): return Info(simulator.dump())
-        case Reset():
-            simulator.reset()
-            return OK()
-        case Fresh():
-            pass
-        case Q():
-            simulator.new_qubit(command.reg, command.bvalue)
-            return OK()
-        case B():
-            pass
-        case N():
-            pass
-        case R():
-            pass
-        case D():
-            pass
-        case M():
-            pass
-        case X():
-            pass
-        case Y():
-            pass
-        case Z():
-            pass
-        case H():
-            pass
-        case S():
-            pass
-        case SInv():
-            pass
-        case T():
-            pass
-        case TInv():
-            pass
-        case Rot():
-            pass
-        case Diag():
-            pass
-        case CNOT():
-            pass
-        case CRot():
-            pass
-        case Toffoli():
-            pass
-        case CZ():
-            pass
-        case CY():
-            pass
+class Interpreter:
+    def __init__(self, lazy: bool = False, verbose: bool = False):
+        self.lazy = lazy
+        self.verbose = verbose
+        self.sim = Simulator(verbose=verbose)
+
+    def interpret(self, command: Command) -> Result:
+        match command:
+            case Empty(): return Null()
+            case Quit(): return Terminate()
+            case Help(): return Info(HELP_MESSAGE)
+            case Dump(): return Info(self.sim.dump())
+            case Reset():
+                self.sim.reset()
+                return OK()
+            case Fresh():
+                reg: int = self.sim.fresh()
+                return Reply(str(reg))
+            case Q():
+                self.sim.new_qubit(command.reg, command.bvalue)
+                return OK()
+            case B():
+                self.sim.new_bit(command.reg, command.bvalue)
+                return OK()
+            case N():
+                pass
+            case R():
+                pass
+            case D():
+                pass
+            case M():
+                pass
+            case X():
+                pass
+            case Y():
+                pass
+            case Z():
+                pass
+            case H():
+                pass
+            case S():
+                pass
+            case SInv():
+                pass
+            case T():
+                pass
+            case TInv():
+                pass
+            case Rot():
+                pass
+            case Diag():
+                pass
+            case CNOT():
+                pass
+            case CRot():
+                pass
+            case Toffoli():
+                pass
+            case CZ():
+                pass
+            case CY():
+                pass

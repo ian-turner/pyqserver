@@ -155,10 +155,6 @@ def parse_nats(float_strs: List[str]) -> List[float]:
 
 
 def parse_command(command_str: str) -> Command:
-    if command_str[0] == '#':
-        # ignoring comments
-        return Empty()
-    
     # splitting command into words
     command_str_split = command_str.split(' ')
     op = command_str_split[0]
@@ -166,6 +162,7 @@ def parse_command(command_str: str) -> Command:
 
     # parsing command into operation
     match op, args:
+        case '#', _: pass # ignoring comments
         case 'Q', [reg]: return Q(parse_nat(reg))
         case 'Q', [reg, bit]: return Q(parse_nat(reg), parse_bit(bit))
         case 'Q', []: raise ParseError('Command Q requires an argument')
