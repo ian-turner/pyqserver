@@ -74,7 +74,25 @@ class Simulator:
         self.bits[reg] = bvalue
 
     def measure(self, reg: int):
-        pass
+        # making sure register exists and is type qubit
+        if reg not in self.context:
+            raise UsageError('Register %d does not exist' % reg)
+        
+        if reg not in self.qubits:
+            raise UsageError('Register %d has type BIT' % reg)
+        
+        # applying measurement operation
+        q = self.qubits[reg]
+        self.state.apply_operation(cirq.measure(q, key='m'))
+        result = self.state.log_of_measurement_results['m'][0]
+
+        # removing qubit from state vector
+        self.state.remove_qubits([q])
+
+        # converting type of register to bit
+        self.context[reg] = RegType.BIT
+        del self.qubits[reg]
+        self.bits[reg] = bool(result)
 
     def read(self, reg: int) -> int:
         pass

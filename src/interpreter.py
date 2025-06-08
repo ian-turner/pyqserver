@@ -97,7 +97,8 @@ class Interpreter:
             case D():
                 pass
             case M():
-                pass
+                self.sim.measure(command.reg)
+                return OK()
             case X():
                 pass
             case Y():
