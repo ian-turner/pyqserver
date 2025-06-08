@@ -75,11 +75,19 @@ class Simulator:
         for key in self.context:
             val = self.context[key]
             context += '\n%d: %s' % (key, val)
-        return 'Simulator state:\nContext: %s\nState vector:\n%s\n' \
-            % (context, str(state_vector))
+        # making sure to only print 100 lines of numpy vector
+        with np.printoptions(threshold=100):
+            return 'Simulator state:\nContext: %s\nState vector:\n%s\n' \
+                % (context, str(state_vector))
 
     def fresh(self) -> Register:
-        pass
+        """ Finds the first unused register """
+        i = 0
+        while True:
+            if i not in self.context:
+                break
+            i += 1
+        return i
 
     def new_qubit(self, reg: Register, bvalue: Bit = False):
         # making sure register is empty
@@ -171,11 +179,11 @@ class Simulator:
         # removing bit register from context
         del self.context[reg]
 
-    def gate_X(self, reg: Register, controls: List[Register]):
-        self._gate_operation(cirq.X, [reg], controls)
-
     def gate_H(self, reg: Register, controls: List[Register]):
         self._gate_operation(cirq.H, [reg], controls)
+
+    def gate_X(self, reg: Register, controls: List[Register]):
+        self._gate_operation(cirq.X, [reg], controls)
 
     def gate_Y(self, reg: Register, controls: List[Register]):
         self._gate_operation(cirq.Y, [reg], controls)
@@ -188,3 +196,12 @@ class Simulator:
 
     def gate_TInv(self, reg: Register, controls: List[Register]):
         self._gate_operation(cirq.inverse(cirq.T), [reg], controls)
+
+    def gate_S(self, reg: Register, controls: List[Register]):
+        self._gate_operation(cirq.S, [reg], controls)
+
+    def gate_SInv(self, reg: Register, controls: List[Register]):
+        self._gate_operation(cirq.inverse(cirq.S), [reg], controls)
+
+    def gate_CNOT(self, x: Register, y: Register, controls: List[Register]):
+        self._gate_operation(cirq.CNOT, [x, y], controls)

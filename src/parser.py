@@ -204,7 +204,7 @@ def parse_command(command_str: str) -> Command:
         case 'CROT', [r, x, y, *ctrls]: return CRot(parse_float(r), parse_nat(x), \
             parse_nat(y), parse_nats(ctrls))
         case 'CROT', [*_]: raise ParseError('Command CROT requires at least three arguments')
-        case 'CNOT', [x, y, *ctrls]: return CNOT(parse_nat(x), parse_nat(y), \
+        case 'CNOT', [y, x, *ctrls]: return CNOT(parse_nat(x), parse_nat(y), \
             parse_nats(ctrls))
         case 'CNOT', [*_]: raise ParseError('Command CNOT requires at least two arguments')
         case 'TOF', [a, b, c, *ctrls]: return Toffoli(parse_nat(a), \

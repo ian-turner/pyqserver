@@ -131,7 +131,8 @@ class Interpreter:
             case Diag():
                 pass
             case CNOT():
-                pass
+                self.sim.gate_CNOT(command.x, command.y, command.controls)
+                return OK()
             case CRot():
                 pass
             case Toffoli():
