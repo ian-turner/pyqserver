@@ -103,21 +103,29 @@ class Interpreter:
                 self.sim.measure(command.reg)
                 return OK()
             case X():
-                pass
+                self.sim.gate_X(command.reg, command.controls)
+                return OK()
             case Y():
-                pass
+                self.sim.gate_Y(command.reg, command.controls)
+                return OK()
             case Z():
-                pass
+                self.sim.gate_Z(command.reg, command.controls)
+                return OK()
             case H():
-                pass
+                self.sim.gate_H(command.reg, command.controls)
+                return OK()
             case S():
-                pass
+                self.sim.gate_S(command.reg, command.controls)
+                return OK()
             case SInv():
-                pass
+                self.sim.gate_SInv(command.reg, command.controls)
+                return OK()
             case T():
-                pass
+                self.sim.gate_T(command.reg, command.controls)
+                return OK()
             case TInv():
-                pass
+                self.sim.gate_TInv(command.reg, command.controls)
+                return OK()
             case Rot():
                 pass
             case Diag():

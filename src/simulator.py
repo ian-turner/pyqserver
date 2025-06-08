@@ -34,6 +34,31 @@ class Simulator:
         self.verbose = verbose
         self.reset()
 
+    def _check_qubit_reg_exists(self, reg: Register):
+        if reg not in self.context:
+            raise UsageError('Register %d does not exist' % reg)
+        
+        if not isinstance(self.context[reg], QubitRegister):
+            raise UsageError('Register %d must be of type Qubit' % reg)
+
+    def _check_bit_reg_exists(self, reg: Register):
+        if reg not in self.context:
+            raise UsageError('Register %d does not exist' % reg)
+        
+        if not isinstance(self.context[reg], BitRegister):
+            raise UsageError('Register %d must be of type Bit' % reg)
+        
+    def _gate_operation(self, gate, regs: List[Register], controls: List[Register]):
+        for x in regs:
+            self._check_qubit_reg_exists(x)
+        for c in controls:
+            self._check_bit_reg_exists(c)
+            c_reg = self.context[c]
+            if not c_reg.bit:
+                return
+        qubits = [self.context[x].qubit for x in regs]
+        self.state.apply_operation(gate(*qubits))
+
     def reset(self):
         """ Initialize simulator with an empty typing context
         and an empty quantum state """
@@ -45,12 +70,12 @@ class Simulator:
 
     def dump(self) -> str:
         """ Dump the entire simulator state to the console """
-        state_vector = self.state._state._state_vector.flatten()
+        state_vector = self.state._state._state_vector.reshape(-1,1)
         context = ''
         for key in self.context:
             val = self.context[key]
-            context += '\n\t\t%d: %s' % (key, val)
-        return 'Simulator state:\n\tContext: %s\n\tState vector: %s\n' \
+            context += '\n%d: %s' % (key, val)
+        return 'Simulator state:\nContext: %s\nState vector:\n%s\n' \
             % (context, str(state_vector))
 
     def fresh(self) -> Register:
@@ -145,3 +170,21 @@ class Simulator:
 
         # removing bit register from context
         del self.context[reg]
+
+    def gate_X(self, reg: Register, controls: List[Register]):
+        self._gate_operation(cirq.X, [reg], controls)
+
+    def gate_H(self, reg: Register, controls: List[Register]):
+        self._gate_operation(cirq.H, [reg], controls)
+
+    def gate_Y(self, reg: Register, controls: List[Register]):
+        self._gate_operation(cirq.Y, [reg], controls)
+
+    def gate_Z(self, reg: Register, controls: List[Register]):
+        self._gate_operation(cirq.Z, [reg], controls)
+
+    def gate_T(self, reg: Register, controls: List[Register]):
+        self._gate_operation(cirq.T, [reg], controls)
+
+    def gate_TInv(self, reg: Register, controls: List[Register]):
+        self._gate_operation(cirq.inverse(cirq.T), [reg], controls)
