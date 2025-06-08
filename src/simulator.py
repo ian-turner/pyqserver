@@ -42,8 +42,16 @@ class Simulator:
     def dump(self) -> str:
         """ Dump the entire simulator state to the console """
         state_vector = self.state._state._state_vector.flatten()
+        context = ''
+        for key in self.context:
+            val = self.context[key]
+            context += '\n\t\t' + str(key) + ': ' + val.name
+        bits = ''
+        for key in self.bits:
+            val = self.bits[key]
+            bits += '\n\t\t' + str(key) + ': ' + str(int(val))
         return 'Simulator state:\n\tContext: %s\n\tBits: %s\n\tState vector: %s\n' \
-            % (str(self.context), str(self.bits), str(state_vector))
+            % (context, bits, str(state_vector))
 
     def fresh(self) -> int:
         pass
@@ -71,6 +79,7 @@ class Simulator:
             raise UsageError('Register %d already exists' % reg)
         
         # creating a new bit
+        self.context[reg] = RegType.BIT
         self.bits[reg] = bvalue
 
     def measure(self, reg: int):
@@ -84,7 +93,12 @@ class Simulator:
         # applying measurement operation
         q = self.qubits[reg]
         self.state.apply_operation(cirq.measure(q, key='m'))
-        result = self.state.log_of_measurement_results['m'][0]
+        meas_result: bool = bool(self.state.log_of_measurement_results['m'][0])
+
+        # applying X gate if measure result is 1
+        # (qubits must be |0> to be removed from state vector)
+        if meas_result:
+            self.state.apply_operation(cirq.X(q))
 
         # removing qubit from state vector
         self.state.remove_qubits([q])
@@ -92,7 +106,7 @@ class Simulator:
         # converting type of register to bit
         self.context[reg] = RegType.BIT
         del self.qubits[reg]
-        self.bits[reg] = bool(result)
+        self.bits[reg] = meas_result
 
     def read(self, reg: int) -> int:
         pass
