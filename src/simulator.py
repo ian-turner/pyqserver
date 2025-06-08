@@ -1,18 +1,31 @@
 import cirq
 import numpy as np
 from typing import List, Dict
-from enum import Enum
+from abc import ABC
+from dataclasses import dataclass
 
 
-# definining bit and qubit types
+# defining some helper types
 Qubit = cirq.NamedQubit
 Bit = bool
-Register = int
 
 
-class RegType(Enum):
-    BIT = 0
-    QUBIT = 1
+class Register(ABC):
+    """ Holds simulator data.
+    Can be either bit or qubit type """
+
+
+@dataclass
+class QubitRegister(Register):
+    qubit: cirq.NamedQubit
+
+    def __repr__(self) -> str:
+        return 'QubitRegister(qubit=%s)' % self.qubit.name
+
+
+@dataclass
+class BitRegister(Register):
+    bit: Bit
 
 
 class UsageError(Exception):
@@ -23,21 +36,16 @@ class UsageError(Exception):
 class Simulator:
     def __init__(self, verbose: bool = False):
         self.verbose = verbose
-        self._initialize()
+        self.reset()
 
-    def _initialize(self):
+    def reset(self):
         """ Initialize simulator with an empty typing context
         and an empty quantum state """
         # creating empty typing context
-        self.context: Dict[Register, RegType] = dict()
-        self.qubits: Dict[Register, Qubit] = dict()
-        self.bits: Dict[Register, Bit] = dict()
+        self.context: Dict[int, Register] = dict()
 
         # creating empty cirq simulator state
         self.state = cirq.StateVectorSimulationState(qubits=())
-
-    def reset(self):
-        self._initialize()
 
     def dump(self) -> str:
         """ Dump the entire simulator state to the console """
@@ -45,13 +53,9 @@ class Simulator:
         context = ''
         for key in self.context:
             val = self.context[key]
-            context += '\n\t\t' + str(key) + ': ' + val.name
-        bits = ''
-        for key in self.bits:
-            val = self.bits[key]
-            bits += '\n\t\t' + str(key) + ': ' + str(int(val))
-        return 'Simulator state:\n\tContext: %s\n\tBits: %s\n\tState vector: %s\n' \
-            % (context, bits, str(state_vector))
+            context += '\n\t\t%d: %s' % (key, val)
+        return 'Simulator state:\n\tContext: %s\n\tState vector: %s\n' \
+            % (context, str(state_vector))
 
     def fresh(self) -> int:
         pass
@@ -63,8 +67,7 @@ class Simulator:
         
         # creating a new qubit
         q = Qubit(str(reg))
-        self.context[reg] = RegType.QUBIT
-        self.qubits[reg] = q
+        self.context[reg] = QubitRegister(q)
 
         # adding to current state
         self.state.add_qubits([q])
@@ -73,27 +76,27 @@ class Simulator:
         if bvalue:
             self.state.apply_operation(cirq.X(q))
 
-    def new_bit(self, reg: int, bvalue: bool = False):
+    def new_bit(self, reg: int, bvalue: Bit = False):
         # making sure register is empty
         if reg in self.context:
             raise UsageError('Register %d already exists' % reg)
         
         # creating a new bit
-        self.context[reg] = RegType.BIT
-        self.bits[reg] = bvalue
+        self.context[reg] = BitRegister(bvalue)
 
     def measure(self, reg: int):
         # making sure register exists and is type qubit
         if reg not in self.context:
             raise UsageError('Register %d does not exist' % reg)
         
-        if reg not in self.qubits:
-            raise UsageError('Register %d has type BIT' % reg)
+        q_reg = self.context[reg]
+        if not isinstance(q_reg, QubitRegister):
+            raise UsageError('Register %d must have type Qubit' % reg)
         
         # applying measurement operation
-        q = self.qubits[reg]
+        q = q_reg.qubit
         self.state.apply_operation(cirq.measure(q, key='m'))
-        meas_result: bool = bool(self.state.log_of_measurement_results['m'][0])
+        meas_result: Bit = Bit(self.state.log_of_measurement_results['m'][0])
 
         # applying X gate if measure result is 1
         # (qubits must be |0> to be removed from state vector)
@@ -104,9 +107,7 @@ class Simulator:
         self.state.remove_qubits([q])
 
         # converting type of register to bit
-        self.context[reg] = RegType.BIT
-        del self.qubits[reg]
-        self.bits[reg] = meas_result
+        self.context[reg] = BitRegister(meas_result)
 
     def read(self, reg: int) -> int:
         pass
