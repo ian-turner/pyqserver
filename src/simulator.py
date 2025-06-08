@@ -1,6 +1,6 @@
 import cirq
 import numpy as np
-from typing import List, Dict
+from typing import List, Dict, Union
 from abc import ABC
 from dataclasses import dataclass
 
@@ -8,15 +8,11 @@ from dataclasses import dataclass
 # defining some helper types
 Qubit = cirq.NamedQubit
 Bit = bool
-
-
-class Register(ABC):
-    """ Holds simulator data.
-    Can be either bit or qubit type """
+Register = int
 
 
 @dataclass
-class QubitRegister(Register):
+class QubitRegister:
     qubit: cirq.NamedQubit
 
     def __repr__(self) -> str:
@@ -24,7 +20,7 @@ class QubitRegister(Register):
 
 
 @dataclass
-class BitRegister(Register):
+class BitRegister:
     bit: Bit
 
 
@@ -42,7 +38,7 @@ class Simulator:
         """ Initialize simulator with an empty typing context
         and an empty quantum state """
         # creating empty typing context
-        self.context: Dict[int, Register] = dict()
+        self.context: Dict[Register, Union[QubitRegister, BitRegister]] = dict()
 
         # creating empty cirq simulator state
         self.state = cirq.StateVectorSimulationState(qubits=())
@@ -57,10 +53,10 @@ class Simulator:
         return 'Simulator state:\n\tContext: %s\n\tState vector: %s\n' \
             % (context, str(state_vector))
 
-    def fresh(self) -> int:
+    def fresh(self) -> Register:
         pass
 
-    def new_qubit(self, reg: int, bvalue: bool = False):
+    def new_qubit(self, reg: Register, bvalue: Bit = False):
         # making sure register is empty
         if reg in self.context:
             raise UsageError('Register %d already exists' % reg)
@@ -76,7 +72,7 @@ class Simulator:
         if bvalue:
             self.state.apply_operation(cirq.X(q))
 
-    def new_bit(self, reg: int, bvalue: Bit = False):
+    def new_bit(self, reg: Register, bvalue: Bit = False):
         # making sure register is empty
         if reg in self.context:
             raise UsageError('Register %d already exists' % reg)
@@ -84,7 +80,22 @@ class Simulator:
         # creating a new bit
         self.context[reg] = BitRegister(bvalue)
 
-    def measure(self, reg: int):
+    def new_qubit_from_bit(self, reg: Register):
+        # making sure register exists and is bit type
+        if reg not in self.context:
+            raise UsageError('Register %d does not exist' % reg)
+        
+        b_reg = self.context[reg]
+        if not isinstance(b_reg, BitRegister):
+            raise UsageError('Register %d is not type Bit' % reg)
+
+        # removing bit register from context
+        del self.context[reg]
+        
+        # creating new qubit register
+        self.new_qubit(reg, b_reg.bit)
+
+    def measure(self, reg: Register):
         # making sure register exists and is type qubit
         if reg not in self.context:
             raise UsageError('Register %d does not exist' % reg)
@@ -109,5 +120,15 @@ class Simulator:
         # converting type of register to bit
         self.context[reg] = BitRegister(meas_result)
 
-    def read(self, reg: int) -> int:
-        pass
+    def read(self, reg: Register) -> int:
+        # making sure register exists
+        if reg not in self.context:
+            raise UsageError('Register %d does not exist' % reg)
+        
+        # if the register is qubit, measure it first
+        _reg = self.context[reg]
+        if isinstance(_reg, QubitRegister):
+            self.measure(reg)
+        
+        # then return the bit value of the register
+        return int(self.context[reg].bit)

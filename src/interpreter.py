@@ -91,9 +91,11 @@ class Interpreter:
                 self.sim.new_bit(command.reg, command.bvalue)
                 return OK()
             case N():
-                pass
+                self.sim.new_qubit_from_bit(command.reg)
+                return OK()
             case R():
-                pass
+                val = self.sim.read(command.reg)
+                return Reply(str(val))
             case D():
                 pass
             case M():
