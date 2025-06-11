@@ -67,10 +67,8 @@ class Null(Result):
 
 
 class Interpreter:
-    def __init__(self, lazy: bool = False, verbose: bool = False):
-        self.lazy = lazy
-        self.verbose = verbose
-        self.sim = Simulator(verbose=verbose)
+    def __init__(self):
+        self.sim = Simulator()
 
     def interpret(self, command: Command) -> Result:
         match command:
@@ -127,17 +125,22 @@ class Interpreter:
                 self.sim.gate_TInv(command.reg, command.controls)
                 return OK()
             case Rot():
-                pass
+                self.sim.gate_Rz(command.r, command.reg, command.controls)
+                return OK()
             case Diag():
-                pass
+                self.sim.gate_Diag(command.a, command.b, command.reg, command.controls)
             case CNOT():
                 self.sim.gate_CNOT(command.x, command.y, command.controls)
                 return OK()
             case CRot():
-                pass
+                self.sim.gate_CRz(command.r, command.x, command.y, command.controls)
+                return OK()
             case Toffoli():
-                pass
+                self.sim.gate_Toffoli(command.x, command.y, command.z, command.controls)
+                return OK()
             case CZ():
-                pass
+                self.sim.gate_CZ(command.x, command.y, command.controls)
+                return OK
             case CY():
-                pass
+                self.sim.gate_CY(command.x, command.y, command.controls)
+                return OK

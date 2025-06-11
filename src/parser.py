@@ -84,7 +84,7 @@ class SInv(Command):
     controls: List[int]
 
 class Rot(Command):
-    angle: float
+    r: float
     reg: int
     controls: List[int]
 
@@ -100,7 +100,7 @@ class CNOT(Command):
     controls: List[int]
 
 class CRot(Command):
-    angle: float
+    r: float
     x: int
     y: int
     controls: List[int]
@@ -162,7 +162,8 @@ def parse_command(command_str: str) -> Command:
 
     # parsing command into operation
     match op, args:
-        case '#', _: pass # ignoring comments
+        case '', _: return Empty() # empty command
+        case '#', _: return Empty() # ignoring comments
         case 'Q', [reg]: return Q(parse_nat(reg))
         case 'Q', [reg, bit]: return Q(parse_nat(reg), parse_bit(bit))
         case 'Q', []: raise ParseError('Command Q requires an argument')
@@ -195,19 +196,19 @@ def parse_command(command_str: str) -> Command:
         case 'T*', []: raise ParseError('Command T* requires at least one argument')
         case 'S*', [reg, *ctrls]: return SInv(parse_nat(reg), parse_nats(ctrls))
         case 'S*', []: raise ParseError('Command S* requires at least one argument')
-        case 'DIAG', [reg, *ctrls, a, b]: return Diag(parse_nat(reg), parse_nats(ctrls), \
-            parse_float(a), parse_float(b))
+        case 'DIAG', [a, b, reg, *ctrls]: return Diag(parse_float(a), parse_float(b), \
+            parse_nat(reg), parse_nats(ctrls))
         case 'DIAG', [*_]: raise ParseError('Command DIAG requires at least three arguments')
         case 'ROT', [r, reg, *ctrls]: return Rot(parse_float(r), parse_nat(reg), \
             parse_nats(ctrls))
         case 'ROT', [*_]: raise ParseError('Command ROT requires at least two arguments')
-        case 'CROT', [r, x, y, *ctrls]: return CRot(parse_float(r), parse_nat(x), \
+        case 'CROT', [r, y, x, *ctrls]: return CRot(parse_float(r), parse_nat(x), \
             parse_nat(y), parse_nats(ctrls))
         case 'CROT', [*_]: raise ParseError('Command CROT requires at least three arguments')
         case 'CNOT', [y, x, *ctrls]: return CNOT(parse_nat(x), parse_nat(y), \
             parse_nats(ctrls))
         case 'CNOT', [*_]: raise ParseError('Command CNOT requires at least two arguments')
-        case 'TOF', [a, b, c, *ctrls]: return Toffoli(parse_nat(a), \
+        case 'TOF', [c, b, a, *ctrls]: return Toffoli(parse_nat(a), \
             parse_nat(b), parse_nat(c), parse_nats(ctrls))
         case 'TOF', [*_]: raise ParseError('Command TOF requires at least three arguments')
         case 'CZ', [x, y, *ctrls]: return CZ(parse_nat(x), parse_nat(y), parse_nats(ctrls))

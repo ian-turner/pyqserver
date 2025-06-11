@@ -30,8 +30,7 @@ class UsageError(Exception):
 
 
 class Simulator:
-    def __init__(self, verbose: bool = False):
-        self.verbose = verbose
+    def __init__(self):
         self.reset()
 
     def _check_qubit_reg_exists(self, reg: Register):
@@ -115,12 +114,7 @@ class Simulator:
 
     def new_qubit_from_bit(self, reg: Register):
         # making sure register exists and is bit type
-        if reg not in self.context:
-            raise UsageError('Register %d does not exist' % reg)
-        
-        b_reg = self.context[reg]
-        if not isinstance(b_reg, BitRegister):
-            raise UsageError('Register %d is not type Bit' % reg)
+        self._check_bit_reg_exists(reg)
 
         # removing bit register from context
         del self.context[reg]
@@ -130,12 +124,8 @@ class Simulator:
 
     def measure(self, reg: Register):
         # making sure register exists and is type qubit
-        if reg not in self.context:
-            raise UsageError('Register %d does not exist' % reg)
-        
+        self._check_qubit_reg_exists(reg)
         q_reg = self.context[reg]
-        if not isinstance(q_reg, QubitRegister):
-            raise UsageError('Register %d must have type Qubit' % reg)
         
         # applying measurement operation
         q = q_reg.qubit
@@ -205,3 +195,21 @@ class Simulator:
 
     def gate_CNOT(self, x: Register, y: Register, controls: List[Register]):
         self._gate_operation(cirq.CNOT, [x, y], controls)
+
+    def gate_Toffoli(self, x: Register, y: Register, z: Register, controls: List[Register]):
+        self._gate_operation(cirq.TOFFOLI, [x, y, z], controls)
+    
+    def gate_Rz(self, r: float, reg: Register, controls: List[Register]):
+        self._gate_operation(cirq.Rz(rads=r), [reg], controls)
+
+    def gate_Diag(self, a: float, b: float, reg: Register, controls: List[Register]):
+        self._gate_operation(cirq.DiagonalGate(diag_angles_radians=[a, b]), [reg], controls)
+
+    def gate_CZ(self, x: Register, y: Register, controls: List[Register]):
+        self._gate_operation(cirq.CZ, [x, y], controls)
+    
+    def gate_CY(self, x: Register, y: Register, controls: List[Register]):
+        self._gate_operation(cirq.CY, [x, y], controls)
+    
+    def gate_CRz(self, r: float, x: Register, y: Register, controls: List[Register]):
+        self._gate_operation(cirq.Rz(rads=r).controlled(num_controls=1), [x, y], controls)

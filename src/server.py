@@ -51,7 +51,7 @@ class Server:
                     sim_mode = connFile.readline().strip()
 
                 # parsing commands line by line
-                interpreter = Interpreter(lazy=False, verbose=self.verbose)
+                interpreter = Interpreter()
                 while True:
                     # reading the next line
                     line = connFile.readline()
