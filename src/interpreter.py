@@ -93,6 +93,7 @@ class Interpreter:
                 return OK()
             case R():
                 val = self.sim.read(command.reg)
+                self.sim.discard(command.reg)
                 return Reply(str(val))
             case D():
                 self.sim.discard(command.reg)

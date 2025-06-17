@@ -88,7 +88,7 @@ class Server:
                         print('Parse error: %s' % str(e))
                         conn.send(('! Parse error: %s. Try help.\n' % str(e)).encode())
                     except UsageError as e:
-                        print('Internal error: %s' % str(e))
+                        print('Usage error: %s' % str(e))
                         conn.send((('Usage error "! %s"\n' % str(e))).encode())
                     except Exception as e:
                         print('Internal error: %s' % str(e))
