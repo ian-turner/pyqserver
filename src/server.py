@@ -85,12 +85,13 @@ class Server:
 
                     # handling errors
                     except ParseError as e:
-                        print('Parse error: %s' % str(e), file=sys.stderr)
+                        print('Parse error: %s' % str(e))
                         conn.send(('! Parse error: %s. Try help.\n' % str(e)).encode())
                     except UsageError as e:
+                        print('Internal error: %s' % str(e))
                         conn.send((('Usage error "! %s"\n' % str(e))).encode())
                     except Exception as e:
-                        print('Internal error: %s' % str(e), file=sys.stderr)
+                        print('Internal error: %s' % str(e))
                         conn.send(('Internal error: %s\n' % str(e)).encode())
 
         except ConnectionResetError:
