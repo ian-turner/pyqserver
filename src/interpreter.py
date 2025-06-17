@@ -141,7 +141,7 @@ class Interpreter:
                 return OK()
             case CZ():
                 self.sim.gate_CZ(command.x, command.y, command.controls)
-                return OK
+                return OK()
             case CY():
                 self.sim.gate_CY(command.x, command.y, command.controls)
-                return OK
+                return OK()

@@ -209,7 +209,7 @@ class Simulator:
         self._gate_operation(cirq.CZ, [x, y], controls)
     
     def gate_CY(self, x: Register, y: Register, controls: List[Register]):
-        self._gate_operation(cirq.CY, [x, y], controls)
+        self._gate_operation(cirq.Y.controlled(), [x, y], controls)
     
     def gate_CRz(self, r: float, x: Register, y: Register, controls: List[Register]):
         self._gate_operation(cirq.Rz(rads=r).controlled(num_controls=1), [x, y], controls)
