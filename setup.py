@@ -9,5 +9,8 @@ setup(
         'console_scripts': [
             'run_qserver = qserver.main:main'
         ]
-    }
+    },
+    install_requires=[
+        'cirq>=1.5.0',
+    ]
 )
