@@ -1,9 +1,9 @@
 from argparse import ArgumentParser
 
-from server import Server
+from .server import Server
 
 
-if __name__ == '__main__':
+def main():
     # reading command line arguments
     parser = ArgumentParser()
     parser.add_argument('-p', '--port', type=int, default=1901)
@@ -13,3 +13,7 @@ if __name__ == '__main__':
 
     # starting server
     Server(args.port, args.max_connections, args.verbose).run()
+
+
+if __name__ == '__main__':
+    main()

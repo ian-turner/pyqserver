@@ -3,4 +3,4 @@
 DIR=`pwd`
 
 source .venv/bin/activate
-export PYTHONPATH="$PYTHONPATH:$DIR/src"
+export PYTHONPATH="$PYTHONPATH:$DIR/qserver"

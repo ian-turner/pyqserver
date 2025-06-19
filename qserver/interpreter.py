@@ -1,8 +1,8 @@
 from abc import ABC
 from dataclasses import dataclass, is_dataclass
 
-from parser import *
-from simulator import *
+from .parser import *
+from .simulator import *
 
 
 HELP_MESSAGE = """

@@ -2,9 +2,9 @@ import sys
 import socket
 from threading import Thread
 
-from parser import *
-from interpreter import *
-from simulator import *
+from .parser import *
+from .interpreter import *
+from .simulator import *
 
 
 class Server:
