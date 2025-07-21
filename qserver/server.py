@@ -4,7 +4,7 @@ from threading import Thread
 
 from .parser import *
 from .interpreter import *
-from .simulator import *
+from .simulator import UsageError
 
 
 class Server:
@@ -16,22 +16,25 @@ class Server:
 
     def run(self):
         # setting up socket connection
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            print('Starting quantum server on port %d with max %d connections' % \
-                    (self.port, self.max_conns))
-            s.bind(('127.0.0.1', self.port))
-            s.listen()
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                print('Starting quantum server on port %d with max %d connections' % \
+                        (self.port, self.max_conns))
+                s.bind(('127.0.0.1', self.port))
+                s.listen()
 
-            # waiting for new connections and handling
-            while True:
-                # handling connection
-                conn, addr = s.accept()
-                while self.num_conns >= self.max_conns:
-                    # stopping at connection limit and waiting
-                    pass
+                # waiting for new connections and handling
+                try:
+                    while True:
+                        # handling connection
+                        conn, addr = s.accept()
+                        while self.num_conns >= self.max_conns:
+                            # stopping at connection limit and waiting
+                            pass
 
-                t = Thread(target=self._handle_connection, args=(conn, addr,))
-                t.start()
+                        t = Thread(target=self._handle_connection, args=(conn, addr,))
+                        t.start()
+                except KeyboardInterrupt:
+                    print('\nShutting down quantum server')
 
     def _handle_connection(self, conn, addr):
         self.num_conns += 1

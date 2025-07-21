@@ -2,6 +2,9 @@ from abc import ABC
 from dataclasses import dataclass, is_dataclass
 
 from .parser import *
+from .cirq_simulator import CirqSimulator
+from .qiskit_simulator import QiskitSimulator
+
 from .simulator import *
 
 
@@ -68,7 +71,7 @@ class Null(Result):
 
 class Interpreter:
     def __init__(self):
-        self.sim = Simulator()
+        self.sim = QiskitSimulator()
 
     def interpret(self, command: Command) -> Result:
         match command:
