@@ -28,6 +28,7 @@ class BitRegister:
 
 class CirqSimulator(Simulator):
     def __init__(self):
+        super(CirqSimulator, self).__init__()
         self.reset()
 
     def _check_qubit_reg_exists(self, reg: Register):
