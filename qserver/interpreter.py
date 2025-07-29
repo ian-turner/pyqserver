@@ -70,8 +70,14 @@ class Null(Result):
 
 
 class Interpreter:
-    def __init__(self):
-        self.sim = QiskitSimulator()
+    def __init__(self, sim_method: str = 'cirq'):
+        match sim_method:
+            case 'qiskit':
+                self.sim = QiskitSimulator()
+            case 'cirq':
+                self.sim = CirqSimulator()
+            case _:
+                raise Exception('Invalid simulation method `%s`' % sim_method)
 
     def interpret(self, command: Command) -> Result:
         match command:

@@ -9,10 +9,11 @@ def main():
     parser.add_argument('-p', '--port', type=int, default=1901)
     parser.add_argument('-n', '--max_connections', type=int, default=30)
     parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('-s', '--sim_method', type=str, default='cirq')
     args = parser.parse_args()
 
     # starting server
-    Server(args.port, args.max_connections, args.verbose).run()
+    Server(args.port, args.max_connections, args.verbose, sim_method=args.sim_method).run()
 
 
 if __name__ == '__main__':

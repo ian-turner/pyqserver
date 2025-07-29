@@ -8,11 +8,12 @@ from .simulator import UsageError
 
 
 class Server:
-    def __init__(self, port: int, max_conns: int, verbose: bool = False):
+    def __init__(self, port: int, max_conns: int, verbose: bool = False, sim_method: str = 'cirq'):
         self.port = port
         self.max_conns = max_conns
         self.verbose = verbose
         self.num_conns = 0
+        self.sim_method = sim_method
 
     def run(self):
         # setting up socket connection
@@ -54,7 +55,7 @@ class Server:
                     sim_mode = connFile.readline().strip()
 
                 # parsing commands line by line
-                interpreter = Interpreter()
+                interpreter = Interpreter(sim_method=self.sim_method)
                 while True:
                     # reading the next line
                     line = connFile.readline()

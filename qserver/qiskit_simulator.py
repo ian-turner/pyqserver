@@ -6,7 +6,7 @@ from qiskit import QuantumCircuit, qasm3
 from qiskit_aer import AerSimulator
 from qiskit.quantum_info import partial_trace
 from qiskit.quantum_info.states.statevector import Statevector
-from qiskit.circuit.library import XGate, HGate
+from qiskit.circuit.library import XGate, HGate, YGate, ZGate, TGate, SGate, CXGate, CCXGate, RZGate, DiagonalGate
 
 from .simulator import *
 
@@ -192,3 +192,42 @@ class QiskitSimulator(Simulator):
 
     def gate_X(self, reg: Register, controls: List[Register]):
         self._gate_operation(XGate(), [reg], controls)
+
+    def gate_Y(self, reg: Register, controls: List[Register]):
+        self._gate_operation(YGate(), [reg], controls)
+
+    def gate_Z(self, reg: Register, controls: List[Register]):
+        self._gate_operation(ZGate(), [reg], controls)
+
+    def gate_T(self, reg: Register, controls: List[Register]):
+        self._gate_operation(TGate(), [reg], controls)
+
+    def gate_TInv(self, reg: Register, controls: List[Register]):
+        self._gate_operation(TGate().inverse(), [reg], controls)
+
+    def gate_S(self, reg: Register, controls: List[Register]):
+        self._gate_operation(SGate(), [reg], controls)
+
+    def gate_SInv(self, reg: Register, controls: List[Register]):
+        self._gate_operation(SGate().inverse(), [reg], controls)
+
+    def gate_CNOT(self, x: Register, y: Register, controls: List[Register]):
+        self._gate_operation(CXGate(), [x, y], controls)
+
+    def gate_Toffoli(self, x: Register, y: Register, z: Register, controls: List[Register]):
+        self._gate_operation(CCXGate(), [x, y, z], controls)
+    
+    def gate_Rz(self, r: float, reg: Register, controls: List[Register]):
+        self._gate_operation(RZGate(r), [reg], controls)
+
+    def gate_Diag(self, a: float, b: float, reg: Register, controls: List[Register]):
+        self._gate_operation(DiagonalGate([np.exp(1j*a), np.exp(1j*b)]), [reg], controls)
+
+    def gate_CZ(self, x: Register, y: Register, controls: List[Register]):
+        self._gate_operation(ZGate().control(), [x, y], controls)
+
+    def gate_CY(self, x: Register, y: Register, controls: List[Register]):
+        self._gate_operation(YGate().control(), [x, y], controls)
+    
+    def gate_CRz(self, r: float, x: Register, y: Register, controls: List[Register]):
+        self._gate_operation(RZGate(r).control(), [x, y], controls)
