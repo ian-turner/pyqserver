@@ -6,6 +6,7 @@ from qiskit import QuantumCircuit, qasm3
 from qiskit_aer import AerSimulator
 from qiskit.quantum_info import partial_trace
 from qiskit.quantum_info.states.statevector import Statevector
+from qiskit.circuit.library import XGate, HGate
 
 from .simulator import *
 
@@ -113,6 +114,7 @@ class QiskitSimulator(Simulator):
         qc = QuantumCircuit(self.num_qubits, 1)
         qc.initialize(self.state, list(range(self.num_qubits)))
         qc.measure(q_reg.qubit, 0)
+        qc.save_statevector()
 
         result = self._sim.run(qc,shots=1).result()
         meas_result: Bit = bool(int(list(result.get_counts())[0]))
@@ -122,7 +124,7 @@ class QiskitSimulator(Simulator):
 
         self.num_qubits -= 1
         if self.num_qubits > 0:
-            self.state = partial_trace(self.state, [q_reg.qubit]).to_statevector()
+            self.state = partial_trace(result.get_statevector(), [q_reg.qubit]).to_statevector()
         else:
             self.state = None
 
@@ -132,7 +134,6 @@ class QiskitSimulator(Simulator):
             if isinstance(x, QubitRegister) and x.qubit > q_reg.qubit:
                 x.qubit -= 1
                         
-
     def read(self, reg: Register) -> int:
         # making sure register exists
         if reg not in self.context:
@@ -158,3 +159,36 @@ class QiskitSimulator(Simulator):
 
         # removing bit register from context
         del self.context[reg]
+
+    def new_qubit_from_bit(self, reg: Register):
+        # making sure register exists and is bit type
+        self._check_bit_reg_exists(reg)
+
+        # removing bit register from context
+        del self.context[reg]
+        
+        # creating new qubit register
+        self.new_qubit(reg, b_reg.bit)
+
+    def _gate_operation(self, gate, regs: List[Register], controls: List[Register]):
+        for x in regs:
+            self._check_qubit_reg_exists(x)
+        for c in controls:
+            self._check_bit_reg_exists(c)
+            c_reg = self.context[c]
+            if not c_reg.bit:
+                return
+        
+        qubits = [self.context[x].qubit for x in regs]
+        qc = QuantumCircuit(self.num_qubits)
+        qc.initialize(self.state, list(range(self.num_qubits)))
+        qc.append(gate, qubits)
+        qc.save_statevector()
+        result = self._sim.run(qc,shots=1).result()
+        self.state = result.get_statevector()
+
+    def gate_H(self, reg: Register, controls: List[Register]):
+        self._gate_operation(HGate(), [reg], controls)
+
+    def gate_X(self, reg: Register, controls: List[Register]):
+        self._gate_operation(XGate(), [reg], controls)
