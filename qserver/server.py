@@ -64,14 +64,16 @@ class Server:
                     try:
                         # parsing the command
                         command_str: str = line.strip()
+                        if self.verbose:
+                            print('\tIncoming command: "%s"' % command_str)
+
                         command: Command = parse_command(command_str)
+                        if self.verbose:
+                            print('\tParsed command: %s' % command)
 
                         # interpreting the command
                         result: Result = interpreter.interpret(command)
-                        
                         if self.verbose:
-                            print('\tIncoming command: "%s"' % command_str)
-                            print('\tParsed command: %s' % command)
                             print('\tInterpreter result: %s' % result)
 
                         # handling interpreter result
