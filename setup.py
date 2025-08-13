@@ -12,5 +12,6 @@ setup(
     },
     install_requires=[
         'cirq>=1.5.0',
+        'qiskit>=2.1.1',
     ]
 )
