@@ -1,6 +1,7 @@
 #!/bin/bash
 
-DIR=`pwd`
+DIR=$(pwd)
 
 source .venv/bin/activate
-export PYTHONPATH="$PYTHONPATH:$DIR/qserver"
+export PYTHONPATH="$PYTHONPATH:$DIR/pyqserver"
+

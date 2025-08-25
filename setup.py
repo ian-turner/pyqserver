@@ -2,12 +2,12 @@ from setuptools import setup
 
 
 setup(
-    name='qserver',
-    version='0.0.2',
-    packages=['qserver'],
+    name='pyqserver',
+    version='0.0.1',
+    packages=['pyqserver'],
     entry_points={
         'console_scripts': [
-            'run_qserver = qserver.main:main'
+            'pyqserver = pyqserver.main:main'
         ]
     },
     install_requires=[

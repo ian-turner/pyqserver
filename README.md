@@ -1,4 +1,4 @@
-# QServer
+# PyQServer
 
 Quantum computer simulation server for
 [Proto-Quipper](https://gitlab.com/frank-peng-fu/dpq-remake) language.
@@ -8,12 +8,12 @@ Quantum computer simulation server for
 
 To install the server via pip, run
 ```
-pip install git+https://github.com/ian-turner/qserver    
+pip install git+https://github.com/ian-turner/pyqserver    
 ```
 
 The server can then be started by running
 ```
-run_qserver
+pyqserver
 ```
 
 
