@@ -5,6 +5,7 @@ from threading import Thread
 from .parser import *
 from .interpreter import *
 from .simulator import UsageError
+from .cirq_simulator import CirqSimulator
 
 
 class Server:
@@ -55,7 +56,7 @@ class Server:
                     sim_mode = connFile.readline().strip()
 
                 # parsing commands line by line
-                interpreter = Interpreter(sim_method=self.sim_method)
+                simulator = CirqSimulator()
                 while True:
                     # reading the next line
                     line = connFile.readline()
@@ -72,7 +73,7 @@ class Server:
                             print('\tParsed command: %s' % command)
 
                         # interpreting the command
-                        result: Result = interpreter.interpret(command)
+                        result: Result = simulator.execute(command)
                         if self.verbose:
                             print('\tInterpreter result: %s' % result)
 

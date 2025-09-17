@@ -2,6 +2,6 @@
 
 DIR=$(pwd)
 
-source .venv/bin/activate
+# source .venv/bin/activate
 export PYTHONPATH="$PYTHONPATH:$DIR/pyqserver"
 
