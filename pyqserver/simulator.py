@@ -1,9 +1,9 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Type
 from dataclasses import dataclass, is_dataclass
 from enum import Enum
 
-from .parser import Command
+from .parser import *
 
 
 class UsageError(Exception):
@@ -33,54 +33,133 @@ class Terminate(Result):
 class Null(Result):
     """Nothing happened"""
 
-class RegType(Enum):
-    BIT = 1
-    QUBIT = 2
-
 
 class Simulator(ABC):
     def __init__(self):
-        self.context = {}
-
-    def _check_reg_exists(self, reg: int):
-        if reg not in self.context:
-            raise UsageError('Register %d does not exist' % reg)
-
-    def _check_bit_exists(self, reg: int):
-        self._check_reg_exists(reg)
-        if self.context[reg] != RegType.BIT:
-            raise UsageError('Register %d must be of type bit' % reg)
-
-    def _check_qubit_exists(self, reg: int):
-        self._check_reg_exists(reg)
-        if self.context[reg] != RegType.QUBIT:
-            raise UsageError('Register %d must be of type bit' % reg)
+        self.reset()
 
     def reset(self):
-        self.context = {}
+        self.queue = []
 
+    def _command_to_qasm_gate(self, command: Command) -> str:
+        match command:
+            case Q():
+                idx = self.free_qubits.pop()
+                self.qubit_map[command.reg] = idx
+                gate_str = 'reset qs[%d];' % idx
+                if command.bvalue:
+                    gate_str += '\nx qs[%d];' % idx
+                return gate_str
+            case M():
+                bit_idx = self.free_bits.pop()
+                qubit_idx = self.qubit_map[command.reg]
+                self.bit_map[command.reg] = bit_idx
+                del self.qubit_map[command.reg]
+                self.free_qubits.append(qubit_idx)
+                return 'bs[%d] = measure qs[%d];' % (bit_idx, qubit_idx)
+            case X():
+                idx = self.qubit_map[command.reg]
+                return 'x qs[%d];' % idx
+            case Y():
+                idx = self.qubit_map[command.reg]
+                return 'y qs[%d];' % idx
+            case Z():
+                idx = self.qubit_map[command.reg]
+                return 'z qs[%d];' % idx
+            case H():
+                idx = self.qubit_map[command.reg]
+                return 'h qs[%d];' % idx
+            case S():
+                idx = self.qubit_map[command.reg]
+                return 's qs[%d];' % idx
+            case SInv():
+                idx = self.qubit_map[command.reg]
+                return 'sdg qs[%d];' % idx
+            case T():
+                idx = self.qubit_map[command.reg]
+                return 't qs[%d];' % idx
+            case TInv():
+                idx = self.qubit_map[command.reg]
+                return 'tdg qs[%d];' % idx
+            case Rot():
+                idx = self.qubit_map[command.reg]
+                return 'rz(%f) qs[%d];' % (command.r, idx)
+            case CRot():
+                x = self.qubit_map[command.x]
+                y = self.qubit_map[command.y]
+                return 'ctrl @ rz(%f) qs[%d], qs[%d];' % (command.r, x, y)
+            case CNOT():
+                x = self.qubit_map[command.x]
+                y = self.qubit_map[command.y]
+                return 'cx qs[%d], qs[%d];' % (x, y)
+        
+        return ''
+
+    def _commands_to_qasm(self, commands: List[Command]) -> str:
+        header = 'OPENQASM 3.0;\ninclude "stdgates.inc";\n'
+
+        max_qubits = 0
+        bits = 0
+        current_qubits = 0
+       
+        for command in commands:
+            match command:
+                case Q():
+                    current_qubits += 1
+                    if current_qubits > max_qubits:
+                        max_qubits += 1
+                case M():
+                    current_qubits -= 1
+                    bits += 1
+                case D():
+                    current_qubits -= 1
+                case B():
+                    bits += 1
+        
+        init_decls = 'qubit[%d] qs;\n' % max_qubits
+        if bits > 0:
+            init_decls += 'bit[%d] bs;\n' % bits
+
+        gate_strs = []
+        self.free_qubits = list(range(max_qubits))
+        self.free_bits = list(range(bits))
+        self.qubit_map = {}
+        self.bit_map = {}
+        for command in commands:
+            gate_str = self._command_to_qasm_gate(command)
+            gate_strs.append(gate_str)
+
+        gate_strs_comb = '\n'.join(gate_strs)
+
+        full_qasm = header + init_decls + gate_strs_comb
+        return full_qasm
+
+    @abstractmethod
     def dump(self):
         pass
 
-    def new_bit(self, reg: int, bvalue: bool = False):
-        # make sure register is empty
-        if reg in self.context:
-            raise UsageError('Register %d already exists' % reg)
+    @abstractmethod
+    def _execute_qasm(self):
+        pass
 
-        # creating new bit in register
-        self.context[reg] = RegType.BIT
+    def _execute_queue(self):
+        if len(self.queue) == 0:
+            return
 
-        # creating new bit in simulator...
-
-    def new_qubit(self, reg: int, bvalue: bool = False):
-        # make sure register is empty
-        if reg in self.context:
-            raise UsageError('Register %d already exists' % reg)
-
-        # creating new qubit in register
-        self.context[reg] = RegType.QUBIT
-
-        # creating new qubit in simulator...
+        qasm_str = self._commands_to_qasm(self.queue)
+        self._execute_qasm(qasm_str)
+        self.queue = []
 
     def execute(self, command: Command):
+        match command:
+            case R():
+                self._execute_queue()
+                rval = self.bit_register[command.reg]
+                del self.bit_register[command.reg]
+                return Reply(str(rval))
+            case Quit():
+                return Terminate()
+            case _:
+                self.queue.append(command)
+
         return OK()

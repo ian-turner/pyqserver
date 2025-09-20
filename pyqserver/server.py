@@ -3,18 +3,24 @@ import socket
 from threading import Thread
 
 from .parser import *
-from .interpreter import *
-from .simulator import UsageError
+from .simulator import *
 from .cirq_simulator import CirqSimulator
+from .qiskit_simulator import QiskitSimulator
 
 
 class Server:
-    def __init__(self, port: int, max_conns: int, verbose: bool = False, sim_method: str = 'cirq'):
+    def __init__(self,
+                 port: int,
+                 max_conns: int,
+                 verbose: bool = False,
+                 sim_method: str = 'cirq',
+                 debug: bool = True):
         self.port = port
         self.max_conns = max_conns
         self.verbose = verbose
         self.num_conns = 0
         self.sim_method = sim_method
+        self.debug = debug
 
     def run(self):
         # setting up socket connection
@@ -56,7 +62,7 @@ class Server:
                     sim_mode = connFile.readline().strip()
 
                 # parsing commands line by line
-                simulator = CirqSimulator()
+                simulator = QiskitSimulator()
                 while True:
                     # reading the next line
                     line = connFile.readline()
@@ -75,9 +81,9 @@ class Server:
                         # interpreting the command
                         result: Result = simulator.execute(command)
                         if self.verbose:
-                            print('\tInterpreter result: %s' % result)
+                            print('\tSimulator result: %s' % result)
 
-                        # handling interpreter result
+                        # handling simulator result
                         match result:
                             case OK():
                                 pass
@@ -98,6 +104,8 @@ class Server:
                         print('Usage error: %s' % str(e))
                         conn.send((('Usage error "! %s"\n' % str(e))).encode())
                     except Exception as e:
+                        if self.debug:
+                            raise e
                         print('Internal error: %s' % str(e))
                         conn.send(('Internal error: %s\n' % str(e)).encode())
 
