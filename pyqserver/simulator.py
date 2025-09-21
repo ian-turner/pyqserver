@@ -39,6 +39,8 @@ class Simulator(ABC):
         self.reset()
 
     def reset(self):
+        self.qubit_map = {}
+        self.bit_map = {}
         self.queue = []
 
     def _command_to_qasm_gate(self, command: Command) -> str:
@@ -92,12 +94,14 @@ class Simulator(ABC):
                 x = self.qubit_map[command.x]
                 y = self.qubit_map[command.y]
                 return 'cx qs[%d], qs[%d];' % (x, y)
-        
-        return ''
+            case _:
+                return ''
 
     def _commands_to_qasm(self, commands: List[Command]) -> str:
         header = 'OPENQASM 3.0;\ninclude "stdgates.inc";\n'
 
+        num_prev_qubits = self.num_prev_qubits
+        num_prev_bits = self.num_prev_qubits
         max_qubits = 0
         bits = 0
         current_qubits = 0
@@ -116,15 +120,13 @@ class Simulator(ABC):
                 case B():
                     bits += 1
         
-        init_decls = 'qubit[%d] qs;\n' % max_qubits
+        init_decls = 'qubit[%d] qs;\n' % (max_qubits + num_prev_qubits)
         if bits > 0:
-            init_decls += 'bit[%d] bs;\n' % bits
+            init_decls += 'bit[%d] bs;\n' % (bits + num_prev_bits)
 
         gate_strs = []
-        self.free_qubits = list(range(max_qubits))
-        self.free_bits = list(range(bits))
-        self.qubit_map = {}
-        self.bit_map = {}
+        self.free_qubits = list(range(num_prev_qubits, max_qubits + num_prev_qubits))
+        self.free_bits = list(range(num_prev_bits, num_prev_bits + bits))
         for command in commands:
             gate_str = self._command_to_qasm_gate(command)
             gate_strs.append(gate_str)
@@ -156,6 +158,7 @@ class Simulator(ABC):
                 self._execute_queue()
                 rval = self.bit_register[command.reg]
                 del self.bit_register[command.reg]
+                del self.bit_map[command.reg]
                 return Reply(str(rval))
             case Quit():
                 return Terminate()
