@@ -16,7 +16,6 @@ class QiskitSimulator(Simulator):
     def reset(self):
         super().reset()
         self.state = None
-        self.num_prev_qubits = 0
 
     def dump(self):
         pass

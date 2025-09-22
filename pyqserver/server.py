@@ -44,6 +44,12 @@ class Server:
                 except KeyboardInterrupt:
                     print('\nShutting down quantum server')
 
+    def _get_simulator(self):
+        if self.sim_method == 'qiskit':
+            return QiskitSimulator()
+        elif self.sim_method == 'cirq':
+            return CirqSimulator()
+
     def _handle_connection(self, conn, addr):
         self.num_conns += 1
         try:
@@ -62,7 +68,7 @@ class Server:
                     sim_mode = connFile.readline().strip()
 
                 # parsing commands line by line
-                simulator = QiskitSimulator()
+                simulator = self._get_simulator()
                 while True:
                     # reading the next line
                     line = connFile.readline()

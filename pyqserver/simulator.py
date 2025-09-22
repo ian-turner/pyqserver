@@ -38,17 +38,28 @@ class Simulator(ABC):
     def __init__(self):
         self.reset()
 
+    @abstractmethod
+    def dump(self):
+        pass
+
+    @abstractmethod
+    def _execute_qasm(self):
+        pass
+
+
     def reset(self):
         self.qubit_map = {}
         self.bit_map = {}
         self.queue = []
+        self.num_prev_qubits = 0
+        self.num_prev_bits = 0
 
     def _command_to_qasm_gate(self, command: Command) -> str:
         match command:
             case Q():
                 idx = self.free_qubits.pop()
                 self.qubit_map[command.reg] = idx
-                gate_str = 'reset qs[%d];' % idx
+                gate_str = '//reset qs[%d];' % idx
                 if command.bvalue:
                     gate_str += '\nx qs[%d];' % idx
                 return gate_str
@@ -101,7 +112,7 @@ class Simulator(ABC):
         header = 'OPENQASM 3.0;\ninclude "stdgates.inc";\n'
 
         num_prev_qubits = self.num_prev_qubits
-        num_prev_bits = self.num_prev_qubits
+        num_prev_bits = self.num_prev_bits
         max_qubits = 0
         bits = 0
         current_qubits = 0
@@ -135,14 +146,6 @@ class Simulator(ABC):
 
         full_qasm = header + init_decls + gate_strs_comb
         return full_qasm
-
-    @abstractmethod
-    def dump(self):
-        pass
-
-    @abstractmethod
-    def _execute_qasm(self):
-        pass
 
     def _execute_queue(self):
         if len(self.queue) == 0:
