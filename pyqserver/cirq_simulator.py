@@ -34,7 +34,11 @@ class CirqSimulator(Simulator):
 
         self.bit_register = {}
         for x in self.bit_map:
-            self.bit_register[x] = bit_results[self.bit_map[x]]
+            mapped_bit = self.bit_map[x]
+            if mapped_bit in bit_results:
+                self.bit_register[x] = bit_results[mapped_bit]
+            else:
+                self.bit_register[x] = 0
 
         # saving statevector...
 
