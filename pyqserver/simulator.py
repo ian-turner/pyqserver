@@ -46,7 +46,6 @@ class Simulator(ABC):
     def _execute_qasm(self):
         pass
 
-
     def reset(self):
         self.qubit_map = {}
         self.bit_map = {}
@@ -153,7 +152,6 @@ class Simulator(ABC):
             return
 
         qasm_str = self._commands_to_qasm(self.queue)
-        print(qasm_str)
         self._execute_qasm(qasm_str)
         self.queue = []
 
@@ -168,6 +166,8 @@ class Simulator(ABC):
                 return Reply(str(rval))
             case Quit():
                 return Terminate()
+            case Reset():
+                self.reset()
             case _:
                 self.queue.append(command)
 

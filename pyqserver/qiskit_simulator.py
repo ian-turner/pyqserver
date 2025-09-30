@@ -39,7 +39,6 @@ class QiskitSimulator(Simulator):
 
         # getting bit outputs
         bit_result = [int(x) for x in result.get_memory()[0][::-1]]
-        print(result.get_memory())
         for x in self.bit_map:
             self.bit_register[x] = bit_result[self.bit_map[x]]
 
