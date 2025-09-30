@@ -105,6 +105,11 @@ class Simulator(ABC):
                 x = self.qubit_map[command.x]
                 y = self.qubit_map[command.y]
                 return 'cx qs[%d], qs[%d];' % (x, y)
+            case Toffoli():
+                x = self.qubit_map[command.x]
+                y = self.qubit_map[command.y]
+                z = self.qubit_map[command.z]
+                return 'ccx qs[%d], qs[%d], qs[%d];' % (x, y, z)
             case _:
                 return ''
 

@@ -30,9 +30,6 @@ class QiskitSimulator(Simulator):
             _qc.initialize(self.state, list(range(self.num_prev_qubits)))
             qc = _qc.compose(qc)
 
-        with open('circ.qpy', 'wb') as file:
-            qpy.dump(qc, file)
-
         # running simulation
         sim = AerSimulator()
         result = sim.run(qc, shots=1, memory=True).result()
