@@ -53,13 +53,14 @@ class Simulator(ABC):
         self.queue = []
         self.num_prev_qubits = 0
         self.num_prev_bits = 0
+        self.bit_register = {}
 
     def _command_to_qasm_gate(self, command: Command) -> str:
         match command:
             case Q():
                 idx = self.free_qubits.pop()
                 self.qubit_map[command.reg] = idx
-                gate_str = '//reset qs[%d];' % idx
+                gate_str = 'reset qs[%d];' % idx
                 if command.bvalue:
                     gate_str += '\nx qs[%d];' % idx
                 return gate_str
@@ -152,6 +153,7 @@ class Simulator(ABC):
             return
 
         qasm_str = self._commands_to_qasm(self.queue)
+        print(qasm_str)
         self._execute_qasm(qasm_str)
         self.queue = []
 
@@ -162,6 +164,7 @@ class Simulator(ABC):
                 rval = self.bit_register[command.reg]
                 del self.bit_register[command.reg]
                 del self.bit_map[command.reg]
+                self.num_prev_bits -= 1
                 return Reply(str(rval))
             case Quit():
                 return Terminate()

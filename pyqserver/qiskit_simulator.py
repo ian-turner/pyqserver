@@ -2,7 +2,7 @@ import numpy as np
 from typing import List, Dict, Union
 from abc import ABC
 from dataclasses import dataclass
-from qiskit import qasm3
+from qiskit import QuantumCircuit, qasm3, qpy
 from qiskit_aer import AerSimulator
 from qiskit.quantum_info import partial_trace
 
@@ -25,7 +25,13 @@ class QiskitSimulator(Simulator):
         qc = qasm3.loads(qasm_str)
         qc.save_statevector()
         if self.state and self.num_prev_qubits > 0:
-            qc.initialize(self.state, list(range(self.num_prev_qubits)))
+            # prepending state initialization
+            _qc = QuantumCircuit(self.num_prev_qubits)
+            _qc.initialize(self.state, list(range(self.num_prev_qubits)))
+            qc = _qc.compose(qc)
+
+        with open('circ.qpy', 'wb') as file:
+            qpy.dump(qc, file)
 
         # running simulation
         sim = AerSimulator()
@@ -33,7 +39,7 @@ class QiskitSimulator(Simulator):
 
         # getting bit outputs
         bit_result = [int(x) for x in result.get_memory()[0][::-1]]
-        self.bit_register = {}
+        print(result.get_memory())
         for x in self.bit_map:
             self.bit_register[x] = bit_result[self.bit_map[x]]
 
