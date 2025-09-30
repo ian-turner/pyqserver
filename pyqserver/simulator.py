@@ -132,11 +132,12 @@ class Simulator(ABC):
                     current_qubits -= 1
                     bits += 1
                 case D():
-                    current_qubits -= 1
+                    bits += 1
                 case B():
                     bits += 1
         
-        init_decls = 'qubit[%d] qs;\n' % (max_qubits + num_prev_qubits)
+        n_qubits = max_qubits + num_prev_qubits
+        init_decls = 'qubit[%d] qs;\n' % n_qubits
         if bits > 0:
             init_decls += 'bit[%d] bs;\n' % (bits + num_prev_bits)
 
@@ -150,14 +151,14 @@ class Simulator(ABC):
         gate_strs_comb = '\n'.join(gate_strs)
 
         full_qasm = header + init_decls + gate_strs_comb
-        return full_qasm
+        return n_qubits, full_qasm
 
     def _execute_queue(self):
         if len(self.queue) == 0:
             return
 
-        qasm_str = self._commands_to_qasm(self.queue)
-        self._execute_qasm(qasm_str)
+        n_qubits, qasm_str = self._commands_to_qasm(self.queue)
+        self._execute_qasm(n_qubits, qasm_str)
         self.queue = []
 
     def execute(self, command: Command):
