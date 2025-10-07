@@ -46,13 +46,13 @@ class CirqSimulator(Simulator):
             raise UsageError('Register %d must be of type Bit' % reg)
         
     def _gate_operation(self, gate, regs: List[Register], controls: List[Register]):
-        for x in regs:
-            self._check_qubit_reg_exists(x)
-        for c in controls:
-            self._check_bit_reg_exists(c)
-            c_reg = self.context[c]
-            if not c_reg.bit:
-                return
+#        for x in regs:
+#            self._check_qubit_reg_exists(x)
+#        for c in controls:
+#            self._check_bit_reg_exists(c)
+#            c_reg = self.context[c]
+#            if not c_reg.bit:
+#                return
         qubits = [self.context[x].qubit for x in regs]
         self.state.apply_operation(gate(*qubits))
 
@@ -88,8 +88,8 @@ class CirqSimulator(Simulator):
 
     def new_qubit(self, reg: Register, bvalue: Bit = False):
         # making sure register is empty
-        if reg in self.context:
-            raise UsageError('Register %d already exists' % reg)
+#        if reg in self.context:
+#            raise UsageError('Register %d already exists' % reg)
         
         # creating a new qubit
         q = Qubit(str(reg))
@@ -104,15 +104,15 @@ class CirqSimulator(Simulator):
 
     def new_bit(self, reg: Register, bvalue: Bit = False):
         # making sure register is empty
-        if reg in self.context:
-            raise UsageError('Register %d already exists' % reg)
+#        if reg in self.context:
+#            raise UsageError('Register %d already exists' % reg)
         
         # creating a new bit
         self.context[reg] = BitRegister(bvalue)
 
     def new_qubit_from_bit(self, reg: Register):
         # making sure register exists and is bit type
-        self._check_bit_reg_exists(reg)
+#        self._check_bit_reg_exists(reg)
 
         # removing bit register from context
         del self.context[reg]
@@ -122,7 +122,7 @@ class CirqSimulator(Simulator):
 
     def measure(self, reg: Register):
         # making sure register exists and is type qubit
-        self._check_qubit_reg_exists(reg)
+#        self._check_qubit_reg_exists(reg)
         q_reg = self.context[reg]
         
         # applying measurement operation
@@ -143,8 +143,8 @@ class CirqSimulator(Simulator):
 
     def read(self, reg: Register) -> int:
         # making sure register exists
-        if reg not in self.context:
-            raise UsageError('Register %d does not exist' % reg)
+#        if reg not in self.context:
+#            raise UsageError('Register %d does not exist' % reg)
         
         # if the register is qubit, measure it first
         _reg = self.context[reg]
@@ -156,8 +156,8 @@ class CirqSimulator(Simulator):
     
     def discard(self, reg: Register):
         # making sure register exists
-        if reg not in self.context:
-            raise UsageError('Register %d does not exist' % reg)
+#        if reg not in self.context:
+#            raise UsageError('Register %d does not exist' % reg)
         
         # if reg is qubit type, measure it first
         _reg = self.context[reg]
