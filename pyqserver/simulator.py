@@ -59,7 +59,7 @@ class Simulator(ABC):
             case Q():
                 idx = self.free_qubits.pop()
                 self.qubit_map[command.reg] = idx
-                gate_str = 'reset qs[%d];' % idx
+                gate_str = '//reset qs[%d];' % idx
                 if command.bvalue:
                     gate_str += '\nx qs[%d];' % idx
                 return gate_str

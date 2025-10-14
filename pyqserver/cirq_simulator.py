@@ -4,7 +4,7 @@ import numpy as np
 from typing import List, Dict, Union
 from abc import ABC
 from dataclasses import dataclass
-from qbraid.transpiler import transpile
+from cirq.contrib.qasm_import import circuit_from_qasm
 
 from .simulator import *
 
@@ -13,18 +13,22 @@ class CirqSimulator(Simulator):
     def __init__(self):
         super(CirqSimulator, self).__init__()
 
+    def reset(self):
+        super().reset()
+        self.state = np.array([1], dtype=np.complex64)
+
     def dump(self):
         pass
 
-    def _execute_qasm(self, qasm_str: str):
-        qc = transpile(qasm_str, 'cirq')
+    def _execute_qasm(self, n_qubits: int, qasm_str: str):
+        qc = circuit_from_qasm(qasm_str)
 
         # state initialization...
 
         # running simulation
 #        sim = cirq.Simulator()
         sim = QSimSimulator()
-        result = sim.simulate(qc)
+        result = sim.run(qc)
 
         # getting bit outputs
         bit_results = {}
@@ -42,4 +46,11 @@ class CirqSimulator(Simulator):
 
         # saving statevector...
 
-        # shifting qubit map down...
+        # shifting qubit map down
+        qubit_map_list = [(x, self.qubit_map[x]) for x in self.qubit_map]
+        qubit_map_list = sorted(qubit_map_list, key=lambda x: x[1])
+        for i, x in enumerate(qubit_map_list):
+            self.qubit_map[x[0]] = i
+
+        self.num_prev_qubits = len(list(self.qubit_map))
+        self.num_prev_bits = len(list(self.bit_map))

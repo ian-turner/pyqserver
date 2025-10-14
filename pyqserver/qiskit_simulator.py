@@ -22,11 +22,9 @@ class QiskitSimulator(Simulator):
 
     def _execute_qasm(self, n_qubits: int, qasm_str: str):
         # loading qasm as a circuit
-        print(qasm_str)
         qc = qasm3.loads(qasm_str)
         qc.save_statevector()
         if self.state and self.num_prev_qubits > 0:
-            print(self.state)
             # prepending state initialization
             _qc = QuantumCircuit(n_qubits)
             _qc.initialize(self.state, list(range(self.num_prev_qubits)))
