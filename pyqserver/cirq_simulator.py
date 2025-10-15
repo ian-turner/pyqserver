@@ -24,6 +24,11 @@ class CirqSimulator(Simulator):
         qc = circuit_from_qasm(qasm_str)
 
         # state initialization...
+        new_qubits = n_qubits - self.num_prev_qubits
+        for _ in range(new_qubits):
+            self.state = np.kron(self.state, np.array([1, 0], dtype=np.complex64))
+        qs = list(qc.all_qubits())
+        qc.insert(0, [cirq.StatePreparationChannel(self.state)(*qs)])
 
         # running simulation
 #        sim = cirq.Simulator()
