@@ -49,6 +49,8 @@ class Server:
             return QiskitSimulator()
         elif self.sim_method == 'cirq':
             return CirqSimulator()
+        else:
+            raise Exception('Invalid simulation method `%s`' % self.sim_method)
 
     def _handle_connection(self, conn, addr):
         self.num_conns += 1

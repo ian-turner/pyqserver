@@ -13,7 +13,12 @@ def main():
     args = parser.parse_args()
 
     # starting server
-    Server(args.port, args.max_connections, args.verbose, sim_method=args.sim_method).run()
+    Server(
+        args.port,
+        args.max_connections,
+        args.verbose,
+        sim_method=args.sim_method
+    ).run()
 
 
 if __name__ == '__main__':
