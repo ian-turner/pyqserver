@@ -42,10 +42,6 @@ class Simulator(ABC):
     def dump(self):
         pass
 
-    @abstractmethod
-    def _execute_qasm(self):
-        pass
-
     def reset(self):
         self.qubit_map = {}
         self.bit_map = {}
@@ -59,7 +55,7 @@ class Simulator(ABC):
             case Q():
                 idx = self.free_qubits.pop()
                 self.qubit_map[command.reg] = idx
-                gate_str = '//reset qs[%d];' % idx
+                gate_str = 'reset qs[%d];' % idx
                 if command.bvalue:
                     gate_str += '\nx qs[%d];' % idx
                 return gate_str
