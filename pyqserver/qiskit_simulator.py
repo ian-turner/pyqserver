@@ -29,7 +29,6 @@ class QiskitSimulator(Simulator):
 
     def _measure(self, reg: int):
         # measuring the state and collapsing the state vector
-        print(self.state)
         result, sv = self.state.measure([self.qubit_map[reg]])
         bit_result = int(result)
         self.bit_register[reg] = bit_result
@@ -53,7 +52,6 @@ class QiskitSimulator(Simulator):
 
         self.num_qubits -= 1
         del self.qubit_map[reg]
-        print(self.state)
 
     def _execute_qasm(self, qasm_str: str):
         # loading qasm as a circuit
@@ -64,7 +62,6 @@ class QiskitSimulator(Simulator):
             qc_init = QuantumCircuit(self.num_qubits)
             qc_init.initialize(self.state)
             qc = qc_init.compose(qc)
-            print(qc)
 
         # running simulation
         sim = AerSimulator()

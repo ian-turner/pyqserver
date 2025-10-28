@@ -127,7 +127,6 @@ class Simulator(ABC):
         # do nothing if there are no commands in the queue
         if len(self.queue) > 0:
             qasm_str = self._commands_to_qasm(self.queue)
-            print(qasm_str)
             self._execute_qasm(qasm_str)
             self.queue = []
 
