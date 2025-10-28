@@ -4,9 +4,16 @@ from abc import ABC
 from dataclasses import dataclass
 from qiskit import QuantumCircuit, qasm3, qpy
 from qiskit_aer import AerSimulator
-from qiskit.quantum_info import partial_trace
+from qiskit.quantum_info import Statevector, partial_trace
 
 from .simulator import *
+
+
+def tensor_product(mats):
+    curr = 1
+    for x in mats:
+        curr = np.kron(curr, x)
+    return x
 
 
 class QiskitSimulator(Simulator):
@@ -20,39 +27,48 @@ class QiskitSimulator(Simulator):
     def dump(self):
         pass
 
-    def _execute_qasm(self, n_qubits: int, qasm_str: str):
+    def _measure(self, reg: int):
+        # measuring the state and collapsing the state vector
+        print(self.state)
+        result, sv = self.state.measure([self.qubit_map[reg]])
+        bit_result = int(result)
+        self.bit_register[reg] = bit_result
+
+        # removing qubit from state vector
+        if self.num_qubits > 1:
+            prune_idxs = [np.s_[:]] * self.num_qubits
+            prune_idxs[self.qubit_map[reg]] = bit_result
+            prune_idxs.reverse()
+            sv_reshaped = sv.data.reshape(sv.dims())
+            new_sv = sv_reshaped[*prune_idxs].flatten()
+            self.state = Statevector(new_sv)
+
+            # shifting qubit map down to fill space of removed qubit
+            for x in self.qubit_map:
+                if self.qubit_map[x] > self.qubit_map[reg]:
+                    self.qubit_map[x] -= 1
+        
+        else:
+            self.state = None
+
+        self.num_qubits -= 1
+        del self.qubit_map[reg]
+        print(self.state)
+
+    def _execute_qasm(self, qasm_str: str):
         # loading qasm as a circuit
         qc = qasm3.loads(qasm_str)
         qc.save_statevector()
-        if self.state and self.num_prev_qubits > 0:
-            # prepending state initialization
-            _qc = QuantumCircuit(n_qubits)
-            _qc.initialize(self.state, list(range(self.num_prev_qubits)))
-            qc = _qc.compose(qc)
+
+        if self.state:
+            qc_init = QuantumCircuit(self.num_qubits)
+            qc_init.initialize(self.state)
+            qc = qc_init.compose(qc)
+            print(qc)
 
         # running simulation
         sim = AerSimulator()
-        result = sim.run(qc, shots=1, memory=True).result()
-
-        # getting bit outputs
-        bit_result = [int(x) for x in result.get_memory()[0][::-1]]
-        for x in self.bit_map:
-            self.bit_register[x] = bit_result[self.bit_map[x]]
+        result = sim.run(qc).result()
 
         # saving statevector for future computation
-        sv = result.get_statevector()
-        qubits_to_remove = list(range(qc.num_qubits))
-        for x in self.qubit_map:
-            qubits_to_remove.remove(self.qubit_map[x])
-
-        sv_pruned = partial_trace(sv, qubits_to_remove).to_statevector()
-        self.state = sv_pruned
-
-        # shifting entire qubit map down
-        qubit_map_list = [(x, self.qubit_map[x]) for x in self.qubit_map]
-        qubit_map_list = sorted(qubit_map_list, key=lambda x: x[1])
-        for i, x in enumerate(qubit_map_list):
-            self.qubit_map[x[0]] = i
-
-        self.num_prev_qubits = len(list(self.qubit_map))
-        self.num_prev_bits = len(list(self.bit_map))
+        self.state = result.get_statevector()

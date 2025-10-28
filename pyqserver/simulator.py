@@ -42,30 +42,25 @@ class Simulator(ABC):
     def dump(self):
         pass
 
+    @abstractmethod
+    def _execute_qasm(self):
+        pass
+
+    @abstractmethod
+    def _measure(self, reg: int):
+        pass
+
     def reset(self):
+        self.num_qubits = 0
         self.qubit_map = {}
-        self.bit_map = {}
-        self.queue = []
-        self.num_prev_qubits = 0
-        self.num_prev_bits = 0
         self.bit_register = {}
+        self.queue = []
 
     def _command_to_qasm_gate(self, command: Command) -> str:
         match command:
             case Q():
-                idx = self.free_qubits.pop()
-                self.qubit_map[command.reg] = idx
-                gate_str = 'reset qs[%d];' % idx
                 if command.bvalue:
-                    gate_str += '\nx qs[%d];' % idx
-                return gate_str
-            case M():
-                bit_idx = self.free_bits.pop()
-                qubit_idx = self.qubit_map[command.reg]
-                self.bit_map[command.reg] = bit_idx
-                del self.qubit_map[command.reg]
-                self.free_qubits.append(qubit_idx)
-                return 'bs[%d] = measure qs[%d];' % (bit_idx, qubit_idx)
+                    return '\nx qs[%d];' % self.qubit_map[command.reg]
             case X():
                 idx = self.qubit_map[command.reg]
                 return 'x qs[%d];' % idx
@@ -110,61 +105,40 @@ class Simulator(ABC):
                 return ''
 
     def _commands_to_qasm(self, commands: List[Command]) -> str:
-        header = 'OPENQASM 3.0;\ninclude "stdgates.inc";\n'
-
-        num_prev_qubits = self.num_prev_qubits
-        num_prev_bits = self.num_prev_bits
-        max_qubits = 0
-        bits = 0
-        current_qubits = 0
-       
+        # calculating how many qubits to allocate for simulation
         for command in commands:
             match command:
                 case Q():
-                    current_qubits += 1
-                    if current_qubits > max_qubits:
-                        max_qubits += 1
-                case M():
-                    current_qubits -= 1
-                    bits += 1
-                case D():
-                    bits += 1
-                case B():
-                    bits += 1
-        
-        n_qubits = max_qubits + num_prev_qubits
-        init_decls = 'qubit[%d] qs;\n' % n_qubits
-        if bits > 0:
-            init_decls += 'bit[%d] bs;\n' % (bits + num_prev_bits)
+                    self.qubit_map[command.reg] = self.num_qubits
+                    self.num_qubits += 1
 
-        gate_strs = []
-        self.free_qubits = list(range(num_prev_qubits, max_qubits + num_prev_qubits))
-        self.free_bits = list(range(num_prev_bits, num_prev_bits + bits))
+        # constrution OpenQASM circuit
+        qasm_stmts = ['OPENQASM 3.0;', 'include "stdgates.inc";']
+        qasm_stmts.append('qubit[%d] qs;' % self.num_qubits)
         for command in commands:
-            gate_str = self._command_to_qasm_gate(command)
-            gate_strs.append(gate_str)
+            stmt = self._command_to_qasm_gate(command)
+            if stmt:
+                qasm_stmts.append(stmt)
 
-        gate_strs_comb = '\n'.join(gate_strs)
-
-        full_qasm = header + init_decls + gate_strs_comb
-        return n_qubits, full_qasm
+        qasm_str = '\n'.join(qasm_stmts)
+        return qasm_str
 
     def _execute_queue(self):
-        if len(self.queue) == 0:
-            return
-
-        n_qubits, qasm_str = self._commands_to_qasm(self.queue)
-        self._execute_qasm(n_qubits, qasm_str)
-        self.queue = []
+        # do nothing if there are no commands in the queue
+        if len(self.queue) > 0:
+            qasm_str = self._commands_to_qasm(self.queue)
+            print(qasm_str)
+            self._execute_qasm(qasm_str)
+            self.queue = []
 
     def execute(self, command: Command):
         match command:
-            case R():
+            case M():
                 self._execute_queue()
+                self._measure(command.reg)
+            case R():
                 rval = self.bit_register[command.reg]
                 del self.bit_register[command.reg]
-                del self.bit_map[command.reg]
-                self.num_prev_bits -= 1
                 return Reply(str(rval))
             case Quit():
                 return Terminate()
