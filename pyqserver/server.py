@@ -14,12 +14,14 @@ class Server:
                  max_conns: int,
                  verbose: bool = False,
                  sim_method: str = 'cirq',
+                 queueing: bool = True,
                  debug: bool = True):
         self.port = port
         self.max_conns = max_conns
         self.verbose = verbose
         self.num_conns = 0
         self.sim_method = sim_method
+        self.queueing = queueing
         self.debug = debug
 
     def run(self):
@@ -46,9 +48,9 @@ class Server:
 
     def _get_simulator(self):
         if self.sim_method == 'qiskit':
-            return QiskitSimulator()
+            return QiskitSimulator(queueing=self.queueing)
         elif self.sim_method == 'cirq':
-            return CirqSimulator()
+            return CirqSimulator(queueing=self.queueing)
         else:
             raise Exception('Invalid simulation method `%s`' % self.sim_method)
 

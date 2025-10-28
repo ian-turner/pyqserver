@@ -35,8 +35,9 @@ class Null(Result):
 
 
 class Simulator(ABC):
-    def __init__(self):
+    def __init__(self, queueing=False):
         self.reset()
+        self.queueing = queueing
 
     @abstractmethod
     def dump(self):
@@ -60,7 +61,7 @@ class Simulator(ABC):
         match command:
             case Q():
                 if command.bvalue:
-                    return '\nx qs[%d];' % self.qubit_map[command.reg]
+                    return 'x qs[%d];' % self.qubit_map[command.reg]
             case X():
                 idx = self.qubit_map[command.reg]
                 return 'x qs[%d];' % idx
@@ -115,6 +116,7 @@ class Simulator(ABC):
         # constrution OpenQASM circuit
         qasm_stmts = ['OPENQASM 3.0;', 'include "stdgates.inc";']
         qasm_stmts.append('qubit[%d] qs;' % self.num_qubits)
+        qasm_stmts.append('id qs;') # temporary fix for cirq issue where qubits don't show up unless gates act on them
         for command in commands:
             stmt = self._command_to_qasm_gate(command)
             if stmt:
@@ -135,6 +137,7 @@ class Simulator(ABC):
             case M():
                 self._execute_queue()
                 self._measure(command.reg)
+                return OK()
             case R():
                 rval = self.bit_register[command.reg]
                 del self.bit_register[command.reg]
@@ -143,7 +146,9 @@ class Simulator(ABC):
                 return Terminate()
             case Reset():
                 self.reset()
+                return OK()
             case _:
                 self.queue.append(command)
-
-        return OK()
+                if not self.queueing:
+                    self._execute_queue()
+                return OK()

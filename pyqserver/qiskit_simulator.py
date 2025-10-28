@@ -2,23 +2,16 @@ import numpy as np
 from typing import List, Dict, Union
 from abc import ABC
 from dataclasses import dataclass
-from qiskit import QuantumCircuit, qasm3, qpy
+from qiskit import QuantumCircuit, qasm3
 from qiskit_aer import AerSimulator
-from qiskit.quantum_info import Statevector, partial_trace
+from qiskit.quantum_info import Statevector
 
 from .simulator import *
 
 
-def tensor_product(mats):
-    curr = 1
-    for x in mats:
-        curr = np.kron(curr, x)
-    return x
-
-
 class QiskitSimulator(Simulator):
-    def __init__(self):
-        super(QiskitSimulator, self).__init__()
+    def __init__(self, queueing=False):
+        super(QiskitSimulator, self).__init__(queueing=queueing)
 
     def reset(self):
         super().reset()
@@ -60,7 +53,8 @@ class QiskitSimulator(Simulator):
 
         if self.state:
             qc_init = QuantumCircuit(self.num_qubits)
-            qc_init.initialize(self.state)
+            num_prev_qubits = len(self.state.dims())
+            qc_init.initialize(self.state, list(range(num_prev_qubits)))
             qc = qc_init.compose(qc)
 
         # running simulation
