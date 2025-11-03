@@ -92,7 +92,7 @@ class Simulator(ABC):
             case CRot():
                 x = self.qubit_map[command.x]
                 y = self.qubit_map[command.y]
-                return 'ctrl @ rz(%f) qs[%d], qs[%d];' % (command.r, x, y)
+                return 'cp(%f) qs[%d], qs[%d];' % (command.r, x, y)
             case CNOT():
                 x = self.qubit_map[command.x]
                 y = self.qubit_map[command.y]
