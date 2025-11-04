@@ -61,6 +61,6 @@ class CirqSimulator(Simulator):
             sv = np.kron(self.state, new_sv)
 
         # running simulation and saving statevector for future computation
-        sim = cirq.Simulator(split_untangled_states=True)
+        sim = QSimSimulator()
         result = sim.simulate(qc, initial_state=sv)
         self.state = result.final_state_vector
