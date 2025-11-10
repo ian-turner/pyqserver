@@ -15,7 +15,8 @@ class Server:
                  verbose: bool = False,
                  sim_method: str = 'cirq',
                  queueing: bool = True,
-                 debug: bool = True):
+                 debug: bool = True,
+                 gpu: bool = False):
         self.port = port
         self.max_conns = max_conns
         self.verbose = verbose
@@ -23,6 +24,7 @@ class Server:
         self.sim_method = sim_method
         self.queueing = queueing
         self.debug = debug
+        self.gpu = gpu
 
     def run(self):
         # setting up socket connection
@@ -48,7 +50,7 @@ class Server:
 
     def _get_simulator(self):
         if self.sim_method == 'qiskit':
-            return QiskitSimulator(queueing=self.queueing)
+            return QiskitSimulator(queueing=self.queueing, gpu=self.gpu)
         elif self.sim_method == 'cirq':
             return CirqSimulator(queueing=self.queueing)
         else:

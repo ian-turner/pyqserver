@@ -10,6 +10,7 @@ def main():
     parser.add_argument('-n', '--max_connections', type=int, default=30)
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-q', '--queueing', action='store_true')
+    parser.add_argument('-g', '--gpu', action='store_true')
     parser.add_argument('-s', '--sim_method', type=str, default='cirq')
     args = parser.parse_args()
 
@@ -20,6 +21,7 @@ def main():
         args.verbose,
         sim_method=args.sim_method,
         queueing=args.queueing,
+        gpu=args.gpu,
     ).run()
 
 

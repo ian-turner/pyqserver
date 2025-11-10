@@ -10,8 +10,9 @@ from .simulator import *
 
 
 class QiskitSimulator(Simulator):
-    def __init__(self, queueing=False):
+    def __init__(self, queueing=False, gpu=False):
         super(QiskitSimulator, self).__init__(queueing=queueing)
+        self.gpu = gpu
 
     def reset(self):
         super().reset()
@@ -58,7 +59,7 @@ class QiskitSimulator(Simulator):
             qc = qc_init.compose(qc)
 
         # running simulation
-        sim = AerSimulator()
+        sim = AerSimulator(device=('GPU' if self.gpu else 'CPU'))
         result = sim.run(qc).result()
 
         # saving statevector for future computation
