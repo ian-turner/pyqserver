@@ -43,7 +43,7 @@ class CirqSimulator(Simulator):
                     self.qubit_map[x] -= 1
         
         else:
-            self.state = None
+            self.state = np.array([1], dtype=np.complex64)
 
         self.num_qubits -= 1
         del self.qubit_map[reg]
