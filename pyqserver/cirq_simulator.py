@@ -1,6 +1,4 @@
 import cirq
-from cirq import measure_state_vector
-from qsimcirq import QSimSimulator
 import numpy as np
 from typing import List, Dict, Union
 from abc import ABC
@@ -23,7 +21,7 @@ class CirqSimulator(Simulator):
 
     def _measure(self, reg: int):
         # measuring the state and collapsing the state vector
-        result, sv = measure_state_vector(self.state, [self.qubit_map[reg]])
+        result, sv = cirq.measure_state_vector(self.state, [self.qubit_map[reg]])
         bit_result = result[0]
         self.bit_register[reg] = bit_result
 
@@ -61,6 +59,6 @@ class CirqSimulator(Simulator):
             sv = np.kron(self.state, new_sv)
 
         # running simulation and saving statevector for future computation
-        sim = QSimSimulator()
+        sim = cirq.Simulator()
         result = sim.simulate(qc, initial_state=sv)
         self.state = result.final_state_vector
