@@ -17,5 +17,6 @@ setup(
         'qbraid>=0.9.10',
         'qsimcirq>=0.22.0',
         'qiskit-qasm3-import>=0.6.0',
+        'ply',
     ]
 )
